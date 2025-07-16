@@ -18,8 +18,7 @@ Une application React moderne pour cataloguer votre collection de cartes Magic: 
 - **⚖️ Validation des decks** : Vérification automatique des banlists par format
 - **🎨 Sélection d'apparence** : Choisissez l'apparence des cartes parmi toutes leurs impressions
 - **⚡ Support des cartes double face** : Détection automatique avec bouton de retournement et indicateurs visuels
-- **👁️ Deux modes d'affichage** : Vue grille (6 cartes par ligne) et vue liste compacte
-- **💰 Prix CardMarket** : Affichage des prix moyens avec redirection vers CardMarket
+- **👁️ Deux modes d'affichage** : Vue grille (8 cartes par ligne) et vue liste compacte
 - **📱 Design responsive** : Interface adaptée mobile et desktop
 
 ## 🚀 Technologies utilisées
@@ -31,26 +30,6 @@ Une application React moderne pour cataloguer votre collection de cartes Magic: 
 - **API Scryfall** pour les données des cartes
 - **LocalStorage** pour la persistance des données
 - **CSS moderne** avec Flexbox/Grid
-
-## 🛠️ Installation
-
-1. Clonez le projet :
-```bash
-git clone <votre-repo>
-cd mtg-website
-```
-
-2. Installez les dépendances :
-```bash
-npm install
-```
-
-3. Lancez le serveur de développement :
-```bash
-npm run dev
-```
-
-4. Ouvrez votre navigateur sur `http://localhost:5173`
 
 ## 📖 Utilisation
 
@@ -74,17 +53,10 @@ npm run dev
 6. **Modes d'affichage** : Basculez entre vue grille (6 cartes/ligne) et vue liste
 7. **Validation** : Vérifiez automatiquement les cartes bannies et les règles du format
 
-## 🔧 Scripts disponibles
-
-- `npm run dev` : Lance le serveur de développement
-- `npm run build` : Compile l'application pour la production
-- `npm run preview` : Prévisualise la build de production
-- `npm run lint` : Vérifie la qualité du code
 
 ## 🌐 APIs utilisées
 
 - **Scryfall API** : Récupération des données et images des cartes
-- **CardMarket** : Redirection vers les prix et achats
 
 ## 📁 Structure du projet
 
@@ -132,18 +104,3 @@ Les contributions sont les bienvenues ! N'hésitez pas à :
 3. Commit vos changements
 4. Pousser vers la branche
 5. Ouvrir une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence MIT.+ Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
