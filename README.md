@@ -18,8 +18,7 @@ Une application React moderne pour cataloguer votre collection de cartes Magic: 
 - **⚖️ Validation des decks** : Vérification automatique des banlists par format
 - **🎨 Sélection d'apparence** : Choisissez l'apparence des cartes parmi toutes leurs impressions
 - **⚡ Support des cartes double face** : Détection automatique avec bouton de retournement et indicateurs visuels
-- **👁️ Deux modes d'affichage** : Vue grille (6 cartes par ligne) et vue liste compacte
-- **💰 Prix CardMarket** : Affichage des prix moyens avec redirection vers CardMarket
+- **👁️ Deux modes d'affichage** : Vue grille (8 cartes par ligne) et vue liste compacte
 - **📱 Design responsive** : Interface adaptée mobile et desktop
 
 ## 🚀 Technologies utilisées
