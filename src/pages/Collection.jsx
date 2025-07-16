@@ -23,9 +23,10 @@ const Collection = () => {
   const fetchSets = async () => {
     try {
       const response = await scryfallApiGeneral.get('/sets');
-      const expansionSets = response.data.data.filter(set => set.set_type === 'expansion');
+      // Inclure TOUTES les extensions sauf celles qui sont digitales (Arena/MTGO)
+      const allPhysicalSets = response.data.data.filter(set => set.digital === false);
       
-      const sortedSets = sortSets(expansionSets, sortOrder);
+      const sortedSets = sortSets(allPhysicalSets, sortOrder);
       setSets(sortedSets);
     } catch (error) {
       console.error('Erreur lors du chargement des extensions:', error);
@@ -51,6 +52,42 @@ const Collection = () => {
           return new Date(b.released_at) - new Date(a.released_at);
       }
     });
+  };
+
+  // Fonction pour formatter le type d'extension en français
+  const formatSetType = (setType) => {
+    const typeMap = {
+      'expansion': 'Extension',
+      'core': 'Edition de base',
+      'commander': 'Commander',
+      'masters': 'Masters',
+      'duel_deck': 'Duel Deck',
+      'from_the_vault': 'From the Vault',
+      'premium_deck': 'Premium Deck',
+      'box': 'Produit spécial',
+      'promo': 'Promo',
+      'token': 'Jetons',
+      'memorabilia': 'Memorabilia',
+      'funny': 'Un-Set',
+      'starter': 'Starter',
+      'planechase': 'Planechase',
+      'archenemy': 'Archenemy',
+      'vanguard': 'Vanguard',
+      'masterpiece': 'Masterpiece',
+      'spellbook': 'Signature Spellbook',
+      'arsenal': 'Arsenal',
+      'draft_innovation': 'Innovation Draft',
+      'minigame': 'Mini-jeu',
+      'treasure_chest': 'Coffre aux trésors'
+    };
+    return typeMap[setType] || setType;
+  };
+
+  // Fonction pour formater l'affichage complet d'une extension
+  const formatSetDisplay = (set) => {
+    const type = formatSetType(set.set_type);
+    const date = formatSetDate(set.released_at);
+    return `${set.name} (${set.code.toUpperCase()}) - ${type} - ${date}`;
   };
 
   const handleSortChange = (newSortOrder) => {
@@ -160,7 +197,7 @@ const Collection = () => {
             <option value="">Choisir une extension</option>
             {sets.map(set => (
               <option key={set.code} value={set.code}>
-                {set.name} ({set.code.toUpperCase()}) - {formatSetDate(set.released_at)}
+                {formatSetDisplay(set)}
               </option>
             ))}
           </select>
