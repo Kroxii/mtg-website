@@ -42,6 +42,13 @@
 - **Avantages** : Collection authentique de cartes physiques uniquement
 - **Implémentation** : Filtres API et validation côté client
 
+### 8. 📦 Extensions Complètes
+- **Couverture** : TOUTES les extensions physiques (926 extensions)
+- **Types inclus** : Expansion, Commander, Masters, Promos, Tokens, etc.
+- **Exclusions** : Seulement les 52 extensions digitales (Arena/MTGO/Alchemy)
+- **Affichage** : Type d'extension visible dans le sélecteur
+- **Format** : `[Nom] ([CODE]) - [Type] - [Date]`
+
 ## 📱 Modes d'Affichage
 
 ### Mode Grille (6 cartes/ligne)

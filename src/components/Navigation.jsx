@@ -1,19 +1,21 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Library, FileText, User, Zap } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth.jsx';
+import { Home, Library, FileText, User, LogOut, Zap } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
 
-  const handleLoginClick = () => {
-    // Fonctionnalité de connexion à implémenter plus tard
-    console.log('Connexion en cours de développement...');
-    alert('Fonctionnalité de connexion bientôt disponible !');
+  const handleLogout = () => {
+    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+      logout();
+    }
   };
 
   return (
     <nav className="nav-container">
       <div className="nav-content">
-        <Link to="/" className="nav-logo">
+        <Link to="/" className="nav-title">
           <Zap size={24} />
           Magic Collection Manager
         </Link>
@@ -27,34 +29,59 @@ const Navigation = () => {
               Accueil
             </Link>
           </li>
-          <li>
-            <Link 
-              to="/collection" 
-              className={`nav-link ${location.pathname === '/collection' ? 'active' : ''}`}
-            >
-              <Library size={18} />
-              Collection
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/decklists" 
-              className={`nav-link ${location.pathname === '/decklists' ? 'active' : ''}`}
-            >
-              <FileText size={18} />
-              Deck Lists
-            </Link>
-          </li>
+          {isAuthenticated && (
+            <>
+              <li>
+                <Link 
+                  to="/collection" 
+                  className={`nav-link ${location.pathname === '/collection' ? 'active' : ''}`}
+                >
+                  <Library size={18} />
+                  Collection
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/decklists" 
+                  className={`nav-link ${location.pathname === '/decklists' ? 'active' : ''}`}
+                >
+                  <FileText size={18} />
+                  Deck Lists
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
         <div className="nav-actions">
-          <button 
-            className="btn-login"
-            onClick={handleLoginClick}
-            title="Se connecter"
-          >
-            <User size={16} />
-            Connexion
-          </button>
+          {isAuthenticated ? (
+            <>
+              <Link 
+                to="/profile" 
+                className={`btn-profile ${location.pathname === '/profile' ? 'active' : ''}`}
+                title="Mon profil"
+              >
+                <User size={16} />
+                {user?.prenom || 'Profil'}
+              </Link>
+              <button 
+                className="btn-logout"
+                onClick={handleLogout}
+                title="Se déconnecter"
+              >
+                <LogOut size={16} />
+                Déconnexion
+              </button>
+            </>
+          ) : (
+            <Link 
+              to="/login" 
+              className="btn-login"
+              title="Se connecter"
+            >
+              <User size={16} />
+              Connexion
+            </Link>
+          )}
         </div>
       </div>
     </nav>
