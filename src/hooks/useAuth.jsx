@@ -28,12 +28,36 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('mtg_user');
       }
     }
+
+    // Créer un utilisateur de test s'il n'y en a pas
+    const users = JSON.parse(localStorage.getItem('mtg_users') || '[]');
+    if (users.length === 0) {
+      const testUser = {
+        id: '1',
+        email: 'test@mtg.com',
+        password: 'test123',
+        nom: 'Testeur',
+        prenom: 'Magic',
+        dateCreation: new Date().toISOString(),
+        collection: [],
+        deckLists: []
+      };
+      users.push(testUser);
+      localStorage.setItem('mtg_users', JSON.stringify(users));
+      console.log('Utilisateur de test créé: test@mtg.com / test123');
+    }
+
     setLoading(false);
   }, []);
 
   // Fonction de connexion
   const login = async (email, password) => {
     try {
+      // Validation des entrées
+      if (!email || !password) {
+        throw new Error('Email et mot de passe sont obligatoires');
+      }
+
       // Récupérer les utilisateurs stockés
       const users = JSON.parse(localStorage.getItem('mtg_users') || '[]');
       
@@ -51,8 +75,9 @@ export const AuthProvider = ({ children }) => {
       setUser(userWithoutPassword);
       localStorage.setItem('mtg_user', JSON.stringify(userWithoutPassword));
       
-      return { success: true };
+      return { success: true, user: userWithoutPassword };
     } catch (error) {
+      console.error('Erreur de connexion:', error);
       return { success: false, error: error.message };
     }
   };

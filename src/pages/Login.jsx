@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
 
 const Login = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -12,6 +15,9 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Récupérer l'URL de redirection ou utiliser "/" par défaut
+  const from = location.state?.from?.pathname || "/";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,17 +63,23 @@ const Login = () => {
     setLoading(true);
     setErrors({});
 
-    const result = await login(
-      formData.email.trim().toLowerCase(),
-      formData.password
-    );
+    try {
+      const result = await login(
+        formData.email.trim().toLowerCase(),
+        formData.password
+      );
 
-    setLoading(false);
-
-    if (!result.success) {
-      setErrors({ submit: result.error });
+      if (result.success) {
+        // Rediriger vers la page demandée ou vers l'accueil
+        navigate(from, { replace: true });
+      } else {
+        setErrors({ submit: result.error });
+      }
+    } catch (error) {
+      setErrors({ submit: 'Une erreur inattendue s\'est produite' });
+    } finally {
+      setLoading(false);
     }
-    // Si succès, l'utilisateur sera automatiquement redirigé par le useAuth
   };
 
   return (

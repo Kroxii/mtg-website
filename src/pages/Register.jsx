@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { Eye, EyeOff, User, Mail, Lock, UserPlus } from 'lucide-react';
 
 const Register = () => {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -77,19 +78,25 @@ const Register = () => {
     setLoading(true);
     setErrors({});
 
-    const result = await register({
-      nom: formData.nom.trim(),
-      prenom: formData.prenom.trim(),
-      email: formData.email.trim().toLowerCase(),
-      password: formData.password
-    });
+    try {
+      const result = await register({
+        nom: formData.nom.trim(),
+        prenom: formData.prenom.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password
+      });
 
-    setLoading(false);
-
-    if (!result.success) {
-      setErrors({ submit: result.error });
+      if (result.success) {
+        // Rediriger vers l'accueil après inscription réussie
+        navigate('/', { replace: true });
+      } else {
+        setErrors({ submit: result.error });
+      }
+    } catch (error) {
+      setErrors({ submit: 'Une erreur inattendue s\'est produite' });
+    } finally {
+      setLoading(false);
     }
-    // Si succès, l'utilisateur sera automatiquement redirigé par le useAuth
   };
 
   return (
