@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle, Layers, ChevronDown } from 'lucide-react';
 import CardItem from '../components/CardItem';
 import { scryfallApi, isDoubleFacedCard } from '../utils/api';
 import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned } from '../utils/banlists';
@@ -11,9 +11,13 @@ const DeckLists = () => {
   const [editingDeck, setEditingDeck] = useState(null);
   const [newDeckName, setNewDeckName] = useState('');
   const [newDeckFormat, setNewDeckFormat] = useState(FORMATS.COMMANDER);
+  const [commanderSearchTerm, setCommanderSearchTerm] = useState('');
+  const [commanderSearchResults, setCommanderSearchResults] = useState([]);
+  const [selectedCommander, setSelectedCommander] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' ou 'list'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid', 'list', 'stack'
+  const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
   const [deckValidation, setDeckValidation] = useState(null);
   const [cardFaces, setCardFaces] = useState({}); // Pour stocker les faces des cartes double face
   const [foilCards, setFoilCards] = useState({}); // Pour stocker les cartes foil
@@ -28,6 +32,18 @@ const DeckLists = () => {
       setDeckValidation(validation);
     }
   }, [selectedDeck]);
+
+  // Fermer le menu déroulant quand on clique à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isViewMenuOpen && !event.target.closest('.view-mode-selector')) {
+        setIsViewMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isViewMenuOpen]);
 
   const loadDecks = () => {
     const saved = localStorage.getItem('mtg-decks');
@@ -66,6 +82,7 @@ const DeckLists = () => {
         name: newDeckName,
         format: newDeckFormat,
         cards: {},
+        commander: selectedCommander || null,
         created: new Date().toISOString()
       };
       const updatedDecks = [...decks, newDeck];
@@ -73,6 +90,9 @@ const DeckLists = () => {
       saveDecks(updatedDecks);
       setNewDeckName('');
       setNewDeckFormat(FORMATS.COMMANDER);
+      setSelectedCommander(null);
+      setCommanderSearchTerm('');
+      setCommanderSearchResults([]);
       setIsCreating(false);
     }
   };
@@ -124,6 +144,81 @@ const DeckLists = () => {
       console.error('Erreur lors de la recherche:', error);
       setSearchResults([]);
     }
+  };
+
+  const searchCommanders = async (term) => {
+    if (!term.trim()) {
+      setCommanderSearchResults([]);
+      return;
+    }
+
+    try {
+      // Rechercher des créatures légendaires ou des planeswalkers pouvant être commandants
+      let response;
+      try {
+        response = await scryfallApi.get(`/cards/search`, {
+          params: {
+            q: `${term} (type:legendary type:creature) OR (type:planeswalker o:"can be your commander") lang:fr`
+          }
+        });
+      } catch (frenchError) {
+        // Fallback en anglais
+        console.log('Recherche de commandants en français sans résultat, fallback vers l\'anglais');
+        response = await scryfallApi.get(`/cards/search`, {
+          params: {
+            q: `${term} (type:legendary type:creature) OR (type:planeswalker o:"can be your commander")`
+          }
+        });
+      }
+      setCommanderSearchResults(response.data.data || []);
+    } catch (error) {
+      console.error('Erreur lors de la recherche de commandants:', error);
+      setCommanderSearchResults([]);
+    }
+  };
+
+  const selectCommander = (commander) => {
+    setSelectedCommander(commander);
+    setCommanderSearchTerm('');
+    setCommanderSearchResults([]);
+  };
+
+  const removeCommander = (deckId) => {
+    const updatedDecks = decks.map(deck => 
+      deck.id === deckId ? { ...deck, commander: null } : deck
+    );
+    setDecks(updatedDecks);
+    saveDecks(updatedDecks);
+    if (selectedDeck && selectedDeck.id === deckId) {
+      setSelectedDeck({ ...selectedDeck, commander: null });
+    }
+  };
+
+  const setCommanderForDeck = (deckId, commander) => {
+    const updatedDecks = decks.map(deck => 
+      deck.id === deckId ? { ...deck, commander: commander } : deck
+    );
+    setDecks(updatedDecks);
+    saveDecks(updatedDecks);
+    if (selectedDeck && selectedDeck.id === deckId) {
+      setSelectedDeck({ ...selectedDeck, commander: commander });
+    }
+  };
+
+  const setCardAsCommander = (card) => {
+    if (!selectedDeck) return;
+
+    // Vérifier si la carte peut être un commandant
+    const isLegendaryCreature = card.type_line && card.type_line.includes('Legendary') && card.type_line.includes('Creature');
+    const canBeCommander = card.oracle_text && card.oracle_text.includes('can be your commander');
+    
+    if (!isLegendaryCreature && !canBeCommander) {
+      alert('⚠️ Cette carte ne peut pas être un commandant ! Seules les créatures légendaires ou les cartes avec "can be your commander" peuvent être commandants.');
+      return;
+    }
+
+    setCommanderForDeck(selectedDeck.id, card);
+    alert(`✅ ${card.printed_name || card.name} a été défini comme commandant !`);
   };
 
   const addCardToDeck = (card) => {
@@ -239,6 +334,16 @@ const DeckLists = () => {
     window.open(cardMarketUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const viewModeOptions = [
+    { value: 'grid', label: 'Visual Grid', icon: Grid },
+    { value: 'list', label: 'Text', icon: List },
+    { value: 'stack', label: 'Visual Stack', icon: Layers }
+  ];
+
+  const getCurrentViewModeLabel = () => {
+    return viewModeOptions.find(option => option.value === viewMode)?.label || 'Visual Grid';
+  };
+
   return (
     <div className="decklists-container">
       <div className="decklists-header">
@@ -254,31 +359,103 @@ const DeckLists = () => {
 
       {isCreating && (
         <div className="deck-creation">
-          <input
-            type="text"
-            placeholder="Nom du deck"
-            value={newDeckName}
-            onChange={(e) => setNewDeckName(e.target.value)}
-            className="deck-name-input"
-            onKeyPress={(e) => e.key === 'Enter' && createDeck()}
-          />
-          <select
-            value={newDeckFormat}
-            onChange={(e) => setNewDeckFormat(e.target.value)}
-            className="deck-format-select"
-          >
-            {Object.values(FORMATS).map(format => (
-              <option key={format} value={format}>
-                {FORMAT_NAMES[format]}
-              </option>
-            ))}
-          </select>
-          <button onClick={createDeck} className="save-btn">
-            <Save size={16} />
-          </button>
-          <button onClick={() => setIsCreating(false)} className="cancel-btn">
-            <X size={16} />
-          </button>
+          <div className="deck-creation-form">
+            <input
+              type="text"
+              placeholder="Nom du deck"
+              value={newDeckName}
+              onChange={(e) => setNewDeckName(e.target.value)}
+              className="deck-name-input"
+              onKeyPress={(e) => e.key === 'Enter' && createDeck()}
+            />
+            <select
+              value={newDeckFormat}
+              onChange={(e) => setNewDeckFormat(e.target.value)}
+              className="deck-format-select"
+            >
+              {Object.values(FORMATS).map(format => (
+                <option key={format} value={format}>
+                  {FORMAT_NAMES[format]}
+                </option>
+              ))}
+            </select>
+            
+            {/* Section commandant pour format Commander */}
+            {newDeckFormat === FORMATS.COMMANDER && (
+              <div className="commander-selection">
+                <h4>Sélectionner un commandant (optionnel):</h4>
+                {selectedCommander ? (
+                  <div className="selected-commander">
+                    <img 
+                      src={selectedCommander.image_uris?.small}
+                      alt={selectedCommander.printed_name || selectedCommander.name}
+                      className="selected-commander-image"
+                    />
+                    <div className="selected-commander-info">
+                      <span>{selectedCommander.printed_name || selectedCommander.name}</span>
+                      <small>{selectedCommander.set_name}</small>
+                    </div>
+                    <button 
+                      onClick={() => setSelectedCommander(null)}
+                      className="remove-selected-commander"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Rechercher un commandant..."
+                      value={commanderSearchTerm}
+                      onChange={(e) => {
+                        setCommanderSearchTerm(e.target.value);
+                        searchCommanders(e.target.value);
+                      }}
+                      className="commander-search-input"
+                    />
+                    {commanderSearchResults.length > 0 && (
+                      <div className="commander-search-results">
+                        {commanderSearchResults.slice(0, 5).map(commander => (
+                          <div 
+                            key={commander.id} 
+                            className="commander-search-item"
+                            onClick={() => selectCommander(commander)}
+                          >
+                            <img 
+                              src={commander.image_uris?.small}
+                              alt={commander.printed_name || commander.name}
+                              className="commander-search-image"
+                            />
+                            <div className="commander-search-info">
+                              <span>{commander.printed_name || commander.name}</span>
+                              <small>{commander.set_name}</small>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            
+            <div className="deck-creation-actions">
+              <button onClick={createDeck} className="save-btn">
+                <Save size={16} />
+                Créer
+              </button>
+              <button onClick={() => {
+                setIsCreating(false);
+                setSelectedCommander(null);
+                setCommanderSearchTerm('');
+                setCommanderSearchResults([]);
+              }} className="cancel-btn">
+                <X size={16} />
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -341,20 +518,35 @@ const DeckLists = () => {
                   <p>{getTotalCards(selectedDeck)} cartes • {FORMAT_NAMES[selectedDeck.format] || 'Commander'}</p>
                 </div>
                 <div className="deck-controls">
-                  <button 
-                    onClick={() => setViewMode('grid')}
-                    className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                    title="Vue grille"
-                  >
-                    <Grid size={20} />
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('list')}
-                    className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                    title="Vue liste"
-                  >
-                    <List size={20} />
-                  </button>
+                  <div className="view-mode-selector">
+                    <button 
+                      className="view-mode-dropdown"
+                      onClick={() => setIsViewMenuOpen(!isViewMenuOpen)}
+                    >
+                      <span>{getCurrentViewModeLabel()}</span>
+                      <ChevronDown size={16} className={`chevron ${isViewMenuOpen ? 'open' : ''}`} />
+                    </button>
+                    {isViewMenuOpen && (
+                      <div className="view-mode-menu">
+                        {viewModeOptions.map(option => {
+                          const IconComponent = option.icon;
+                          return (
+                            <button
+                              key={option.value}
+                              className={`view-mode-option ${viewMode === option.value ? 'active' : ''}`}
+                              onClick={() => {
+                                setViewMode(option.value);
+                                setIsViewMenuOpen(false);
+                              }}
+                            >
+                              <IconComponent size={16} />
+                              <span>{option.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -392,26 +584,85 @@ const DeckLists = () => {
                 <div className="search-results">
                   <h4>Résultats de recherche:</h4>
                   <div className="search-cards">
-                    {searchResults.slice(0, 10).map(card => (
-                      <div key={card.id} className="search-card">
+                    {searchResults.slice(0, 10).map(card => {
+                      const isLegendaryCreature = card.type_line && card.type_line.includes('Legendary') && card.type_line.includes('Creature');
+                      const canBeCommander = card.oracle_text && card.oracle_text.includes('can be your commander');
+                      const isCommanderEligible = isLegendaryCreature || canBeCommander;
+                      const isCommanderFormat = selectedDeck && selectedDeck.format === FORMATS.COMMANDER;
+                      
+                      return (
+                        <div key={card.id} className="search-card">
+                          <img 
+                            src={card.image_uris?.small} 
+                            alt={card.printed_name || card.name}
+                            className="search-card-image"
+                          />
+                          <div className="search-card-info">
+                            <h5>{card.printed_name || card.name}</h5>
+                            <p>{card.set_name}</p>
+                            {isCommanderEligible && (
+                              <span className="commander-eligible">⭐ Peut être commandant</span>
+                            )}
+                          </div>
+                          <div className="search-card-actions">
+                            <button 
+                              onClick={() => addCardToDeck(card)}
+                              className="add-card-btn"
+                              title="Ajouter au deck"
+                            >
+                              <Plus size={16} />
+                            </button>
+                            {isCommanderFormat && isCommanderEligible && (
+                              <button 
+                                onClick={() => setCardAsCommander(card)}
+                                className="set-commander-btn"
+                                title="Définir comme commandant"
+                              >
+                                ⭐
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Section Commandant pour les decks Commander */}
+              {selectedDeck.format === FORMATS.COMMANDER && (
+                <div className="commander-section">
+                  <h4>Commandant:</h4>
+                  {selectedDeck.commander ? (
+                    <div className="commander-display">
+                      <div className="commander-card">
                         <img 
-                          src={card.image_uris?.small} 
-                          alt={card.printed_name || card.name}
-                          className="search-card-image"
+                          src={selectedDeck.commander.image_uris?.normal || selectedDeck.commander.image_uris?.large}
+                          alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
+                          className="commander-image"
                         />
-                        <div className="search-card-info">
-                          <h5>{card.printed_name || card.name}</h5>
-                          <p>{card.set_name}</p>
+                        <div className="commander-info">
+                          <h5>{selectedDeck.commander.printed_name || selectedDeck.commander.name}</h5>
+                          <p>{selectedDeck.commander.type_line}</p>
+                          <p className="commander-set">{selectedDeck.commander.set_name}</p>
+                          {selectedDeck.commander.mana_cost && (
+                            <div className="commander-mana">{selectedDeck.commander.mana_cost}</div>
+                          )}
                         </div>
                         <button 
-                          onClick={() => addCardToDeck(card)}
-                          className="add-card-btn"
+                          onClick={() => removeCommander(selectedDeck.id)}
+                          className="remove-commander-btn"
+                          title="Retirer le commandant"
                         >
-                          <Plus size={16} />
+                          <X size={16} />
                         </button>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="no-commander">
+                      <p>Aucun commandant sélectionné. Recherchez une créature légendaire et utilisez le bouton ⭐ pour la définir comme commandant.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -421,7 +672,7 @@ const DeckLists = () => {
                   <p>Aucune carte dans ce deck.</p>
                 ) : (
                   <>
-                    {viewMode === 'grid' ? (
+                    {viewMode === 'grid' && (
                       <div className="deck-cards-grid">
                         {Object.values(selectedDeck.cards).map(card => (
                           <CardItem
@@ -438,7 +689,70 @@ const DeckLists = () => {
                           />
                         ))}
                       </div>
-                    ) : (
+                    )}
+
+                    {viewMode === 'stack' && (
+                      <div className="deck-cards-stack">
+                        {Object.values(selectedDeck.cards).map(card => (
+                          <div key={card.id} className="deck-card-stack-item">
+                            <div className="card-stack-images">
+                              {Array.from({ length: Math.min(card.quantity, 4) }, (_, index) => (
+                                <img
+                                  key={index}
+                                  src={card.image_uris?.normal}
+                                  alt={card.printed_name || card.name}
+                                  className="card-stack-image"
+                                  style={{
+                                    transform: `translateX(${index * 3}px) translateY(${index * 2}px)`,
+                                    zIndex: 4 - index
+                                  }}
+                                />
+                              ))}
+                              {card.quantity > 4 && (
+                                <div className="card-stack-overflow">+{card.quantity - 4}</div>
+                              )}
+                            </div>
+                            <div className="card-stack-info">
+                              <div className="card-stack-header">
+                                <h4 className="card-stack-name">
+                                  {card.printed_name || card.name}
+                                  {isDoubleFacedCard(card) && (
+                                    <span className="double-face-indicator" title="Carte double face">⚡</span>
+                                  )}
+                                  {foilCards[card.id] && (
+                                    <span className="foil-indicator" title="Version foil">✨</span>
+                                  )}
+                                  {isCardBanned(card.name, selectedDeck.format || FORMATS.COMMANDER) && (
+                                    <span className="banned-indicator" title="Carte bannie">⚠️</span>
+                                  )}
+                                </h4>
+                                <div className="card-stack-quantity">
+                                  <button 
+                                    onClick={() => updateCardQuantity(card.id, Math.max(0, card.quantity - 1))}
+                                    className="quantity-btn-small"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="quantity-display">{card.quantity}</span>
+                                  <button 
+                                    onClick={() => updateCardQuantity(card.id, card.quantity + 1)}
+                                    className="quantity-btn-small"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="card-stack-details">{card.set_name} • {card.type_line}</p>
+                              {card.mana_cost && (
+                                <div className="card-stack-mana">{card.mana_cost}</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {viewMode === 'list' && (
                       <div className="deck-cards-list-view">
                         {Object.values(selectedDeck.cards).map(card => (
                           <div key={card.id} className="deck-card-list-item">
