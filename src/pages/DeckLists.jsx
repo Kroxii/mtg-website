@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle, Layers, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle, ChevronDown } from 'lucide-react';
 import CardItem from '../components/CardItem';
 import { scryfallApi, isDoubleFacedCard } from '../utils/api';
 import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned } from '../utils/banlists';
@@ -336,12 +336,61 @@ const DeckLists = () => {
 
   const viewModeOptions = [
     { value: 'grid', label: 'Visual Grid', icon: Grid },
-    { value: 'list', label: 'Text', icon: List },
-    { value: 'stack', label: 'Visual Stack', icon: Layers }
+    { value: 'list', label: 'Text', icon: List }
   ];
 
   const getCurrentViewModeLabel = () => {
     return viewModeOptions.find(option => option.value === viewMode)?.label || 'Visual Grid';
+  };
+
+  const organizeCardsByType = (cards) => {
+    const organized = {
+      'Créatures': [],
+      'Planeswalkers': [],
+      'Artefacts': [],
+      'Enchantements': [],
+      'Éphémères': [],
+      'Rituels': [],
+      'Terrains': [],
+      'Autres': []
+    };
+
+    Object.values(cards).forEach(card => {
+      const typeLine = card.type_line || '';
+      
+      if (typeLine.includes('Creature')) {
+        organized['Créatures'].push(card);
+      } else if (typeLine.includes('Planeswalker')) {
+        organized['Planeswalkers'].push(card);
+      } else if (typeLine.includes('Artifact')) {
+        organized['Artefacts'].push(card);
+      } else if (typeLine.includes('Enchantment')) {
+        organized['Enchantements'].push(card);
+      } else if (typeLine.includes('Instant')) {
+        organized['Éphémères'].push(card);
+      } else if (typeLine.includes('Sorcery')) {
+        organized['Rituels'].push(card);
+      } else if (typeLine.includes('Land')) {
+        organized['Terrains'].push(card);
+      } else {
+        organized['Autres'].push(card);
+      }
+    });
+
+    // Trier chaque section par nom
+    Object.keys(organized).forEach(key => {
+      organized[key].sort((a, b) => {
+        const nameA = a.printed_name || a.name;
+        const nameB = b.printed_name || b.name;
+        return nameA.localeCompare(nameB, 'fr');
+      });
+    });
+
+    return organized;
+  };
+
+  const getCardTypeCount = (cards) => {
+    return Object.values(cards).reduce((sum, card) => sum + card.quantity, 0);
   };
 
   return (
@@ -635,28 +684,52 @@ const DeckLists = () => {
                   <h4>Commandant:</h4>
                   {selectedDeck.commander ? (
                     <div className="commander-display">
-                      <div className="commander-card">
-                        <img 
-                          src={selectedDeck.commander.image_uris?.normal || selectedDeck.commander.image_uris?.large}
-                          alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
-                          className="commander-image"
-                        />
-                        <div className="commander-info">
-                          <h5>{selectedDeck.commander.printed_name || selectedDeck.commander.name}</h5>
-                          <p>{selectedDeck.commander.type_line}</p>
-                          <p className="commander-set">{selectedDeck.commander.set_name}</p>
-                          {selectedDeck.commander.mana_cost && (
-                            <div className="commander-mana">{selectedDeck.commander.mana_cost}</div>
-                          )}
+                      {viewMode === 'grid' ? (
+                        <div className="commander-card">
+                          <img 
+                            src={selectedDeck.commander.image_uris?.normal || selectedDeck.commander.image_uris?.large}
+                            alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
+                            className="commander-image"
+                          />
+                          <button 
+                            onClick={() => removeCommander(selectedDeck.id)}
+                            className="remove-commander-btn"
+                            title="Retirer le commandant"
+                          >
+                            <X size={16} />
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => removeCommander(selectedDeck.id)}
-                          className="remove-commander-btn"
-                          title="Retirer le commandant"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="card-text-item commander-text-item">
+                          <div className="card-text-image">
+                            <img 
+                              src={selectedDeck.commander.image_uris?.small || selectedDeck.commander.image_uris?.normal} 
+                              alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
+                              className="card-text-thumb"
+                            />
+                            {isDoubleFacedCard(selectedDeck.commander) && (
+                              <span className="double-face-badge" title="Carte double face">⚡</span>
+                            )}
+                          </div>
+                          <div className="card-text-info">
+                            <span className="card-text-name commander-text-name">
+                              {selectedDeck.commander.printed_name || selectedDeck.commander.name}
+                              {isDoubleFacedCard(selectedDeck.commander) && (
+                                <span className="double-face-indicator" title="Carte double face">⚡</span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="card-text-actions">
+                            <button 
+                              onClick={() => removeCommander(selectedDeck.id)}
+                              className="remove-card-text-btn"
+                              title="Retirer le commandant"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="no-commander">
@@ -672,135 +745,91 @@ const DeckLists = () => {
                   <p>Aucune carte dans ce deck.</p>
                 ) : (
                   <>
-                    {viewMode === 'grid' && (
-                      <div className="deck-cards-grid">
-                        {Object.values(selectedDeck.cards).map(card => (
-                          <CardItem
-                            key={card.id}
-                            card={card}
-                            quantity={card.quantity}
-                            onQuantityChange={updateCardQuantity}
-                            showAppearanceSelector={false}
-                            onAppearanceChange={updateCardAppearance}
-                            showContextMenu={true}
-                            onToggleFoil={toggleCardFoil}
-                            onRemoveCard={removeCardFromDeck}
-                            isFoil={foilCards[card.id] || false}
-                          />
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      const organizedCards = organizeCardsByType(selectedDeck.cards);
+                      
+                      return Object.entries(organizedCards).map(([cardType, cards]) => {
+                        if (cards.length === 0) return null;
+                        
+                        const totalCards = getCardTypeCount(cards.reduce((acc, card) => {
+                          acc[card.id] = card;
+                          return acc;
+                        }, {}));
 
-                    {viewMode === 'stack' && (
-                      <div className="deck-cards-stack">
-                        {Object.values(selectedDeck.cards).map(card => (
-                          <div key={card.id} className="deck-card-stack-item">
-                            <div className="card-stack-images">
-                              {Array.from({ length: Math.min(card.quantity, 4) }, (_, index) => (
-                                <img
-                                  key={index}
-                                  src={card.image_uris?.normal}
-                                  alt={card.printed_name || card.name}
-                                  className="card-stack-image"
-                                  style={{
-                                    transform: `translateX(${index * 3}px) translateY(${index * 2}px)`,
-                                    zIndex: 4 - index
-                                  }}
-                                />
-                              ))}
-                              {card.quantity > 4 && (
-                                <div className="card-stack-overflow">+{card.quantity - 4}</div>
-                              )}
+                        return (
+                          <div key={cardType} className="card-type-section">
+                            <div className="card-type-header">
+                              <h5>{cardType} ({totalCards} cartes)</h5>
                             </div>
-                            <div className="card-stack-info">
-                              <div className="card-stack-header">
-                                <h4 className="card-stack-name">
-                                  {card.printed_name || card.name}
-                                  {isDoubleFacedCard(card) && (
-                                    <span className="double-face-indicator" title="Carte double face">⚡</span>
-                                  )}
-                                  {foilCards[card.id] && (
-                                    <span className="foil-indicator" title="Version foil">✨</span>
-                                  )}
-                                  {isCardBanned(card.name, selectedDeck.format || FORMATS.COMMANDER) && (
-                                    <span className="banned-indicator" title="Carte bannie">⚠️</span>
-                                  )}
-                                </h4>
-                                <div className="card-stack-quantity">
-                                  <button 
-                                    onClick={() => updateCardQuantity(card.id, Math.max(0, card.quantity - 1))}
-                                    className="quantity-btn-small"
-                                  >
-                                    -
-                                  </button>
-                                  <span className="quantity-display">{card.quantity}</span>
-                                  <button 
-                                    onClick={() => updateCardQuantity(card.id, card.quantity + 1)}
-                                    className="quantity-btn-small"
-                                  >
-                                    +
-                                  </button>
-                                </div>
+                            
+                            {viewMode === 'grid' ? (
+                              <div className="deck-cards-grid">
+                                {cards.map(card => (
+                                  <CardItem
+                                    key={card.id}
+                                    card={card}
+                                    quantity={card.quantity}
+                                    onQuantityChange={updateCardQuantity}
+                                    showAppearanceSelector={false}
+                                    onAppearanceChange={updateCardAppearance}
+                                    showContextMenu={true}
+                                    onToggleFoil={toggleCardFoil}
+                                    onRemoveCard={removeCardFromDeck}
+                                    isFoil={foilCards[card.id] || false}
+                                  />
+                                ))}
                               </div>
-                              <p className="card-stack-details">{card.set_name} • {card.type_line}</p>
-                              {card.mana_cost && (
-                                <div className="card-stack-mana">{card.mana_cost}</div>
-                              )}
-                            </div>
+                            ) : (
+                              <div className="deck-cards-list-view">
+                                {cards.map(card => (
+                                  <div key={card.id} className="card-text-item">
+                                    <div className="card-text-image">
+                                      <img 
+                                        src={card.image_uris?.small || card.image_uris?.normal} 
+                                        alt={card.printed_name || card.name}
+                                        className="card-text-thumb"
+                                      />
+                                      {isDoubleFacedCard(card) && (
+                                        <span className="double-face-badge" title="Carte double face">⚡</span>
+                                      )}
+                                    </div>
+                                    <div className="card-text-info">
+                                      <span className="card-text-name">
+                                        {card.printed_name || card.name}
+                                        {isDoubleFacedCard(card) && (
+                                          <span className="double-face-indicator" title="Carte double face">⚡</span>
+                                        )}
+                                        {foilCards[card.id] && (
+                                          <span className="foil-indicator" title="Version foil">✨</span>
+                                        )}
+                                        {isCardBanned(card.name, selectedDeck.format || FORMATS.COMMANDER) && (
+                                          <span className="banned-indicator" title="Carte bannie">⚠️</span>
+                                        )}
+                                      </span>
+                                    </div>
+                                    <div className="card-text-actions">
+                                      <button 
+                                        onClick={() => updateCardQuantity(card.id, Math.max(0, card.quantity - 1))}
+                                        className="quantity-btn-small"
+                                      >
+                                        -
+                                      </button>
+                                      <span className="quantity-display">{card.quantity}</span>
+                                      <button 
+                                        onClick={() => updateCardQuantity(card.id, card.quantity + 1)}
+                                        className="quantity-btn-small"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {viewMode === 'list' && (
-                      <div className="deck-cards-list-view">
-                        {Object.values(selectedDeck.cards).map(card => (
-                          <div key={card.id} className="deck-card-list-item">
-                            <div className="card-list-image">
-                              <img 
-                                src={card.image_uris?.small || card.image_uris?.normal} 
-                                alt={card.printed_name || card.name}
-                                className="card-list-thumb"
-                              />
-                              {isDoubleFacedCard(card) && (
-                                <span className="double-face-badge" title="Carte double face">⚡</span>
-                              )}
-                            </div>
-                            <div className="card-list-info">
-                              <span className="card-list-name">
-                                {card.printed_name || card.name}
-                                {isDoubleFacedCard(card) && (
-                                  <span className="double-face-indicator" title="Carte double face">⚡</span>
-                                )}
-                                {foilCards[card.id] && (
-                                  <span className="foil-indicator" title="Version foil">✨</span>
-                                )}
-                                {isCardBanned(card.name, selectedDeck.format || FORMATS.COMMANDER) && (
-                                  <span className="banned-indicator" title="Carte bannie">⚠️</span>
-                                )}
-                              </span>
-                              <span className="card-list-set">{card.set_name}</span>
-                              <span className="card-list-type">{card.type_line}</span>
-                            </div>
-                            <div className="card-list-actions">
-                              <button 
-                                onClick={() => updateCardQuantity(card.id, Math.max(0, card.quantity - 1))}
-                                className="quantity-btn-small"
-                              >
-                                -
-                              </button>
-                              <span className="quantity-display">{card.quantity}</span>
-                              <button 
-                                onClick={() => updateCardQuantity(card.id, card.quantity + 1)}
-                                className="quantity-btn-small"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      });
+                    })()}
                   </>
                 )}
               </div>
