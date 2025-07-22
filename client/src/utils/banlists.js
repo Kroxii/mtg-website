@@ -54,6 +54,11 @@ export const isCardColorCompatible = (card, commander, format) => {
   const cardColors = getCardColors(card);
   const commanderColors = getCardColors(commander);
   
+  // Les cartes incolores peuvent être ajoutées dans n'importe quel deck
+  if (cardColors.length === 0) {
+    return true;
+  }
+  
   // Une carte peut être ajoutée si toutes ses couleurs sont présentes dans l'identité couleur du commandant
   return cardColors.every(cardColor => commanderColors.includes(cardColor));
 };
@@ -401,8 +406,10 @@ export const validateDeck = (deck, format) => {
   switch (format) {
     case FORMATS.COMMANDER:
     case FORMATS.DUEL_COMMANDER:
-      if (totalCards !== 100) {
-        validation.warnings.push(`Un deck Commander doit contenir exactement 100 cartes (actuellement: ${totalCards})`);
+      // Le commandant ne compte pas dans les 99 cartes
+      const expectedCards = 99;
+      if (totalCards !== expectedCards) {
+        validation.warnings.push(`Un deck Commander doit contenir exactement ${expectedCards} cartes + 1 commandant (actuellement: ${totalCards} cartes)`);
       }
       break;
     case FORMATS.STANDARD:

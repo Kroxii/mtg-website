@@ -13,7 +13,8 @@ const CardItem = ({
   onToggleFace,
   currentFace = 0,
   isFoil = false,
-  onToggleFoil 
+  onToggleFoil,
+  onRemoveCard
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -92,6 +93,17 @@ const CardItem = ({
       label: isFoil ? 'Version normale' : 'Version foil',
       action: handleToggleFoil,
       icon: isFoil ? '✨' : '⭐'
+    });
+  }
+
+  if (onRemoveCard) {
+    contextMenuOptions.push({
+      label: 'Retirer du deck',
+      action: () => {
+        onRemoveCard(card.id);
+        handleCloseContextMenu();
+      },
+      icon: '🗑️'
     });
   }
 

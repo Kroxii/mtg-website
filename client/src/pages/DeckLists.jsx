@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle, ChevronDown } from 'lucide-react';
 import CardItem from '../components/CardItem';
-import { scryfallApi, isDoubleFacedCard } from '../utils/api';
-import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned, isCardColorCompatible } from '../utils/banlists';
+import { scryfallApi, isDoubleFacedCard, getCardFaceImage } from '../utils/api';
+import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned, isCardColorCompatible, getCardColors } from '../utils/banlists';
 
 const DeckLists = () => {
   const [decks, setDecks] = useState([]);
@@ -16,6 +16,7 @@ const DeckLists = () => {
   const [selectedCommander, setSelectedCommander] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [searchError, setSearchError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid', 'list', 'stack'
   const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
   const [deckValidation, setDeckValidation] = useState(null);
@@ -118,10 +119,12 @@ const DeckLists = () => {
   const searchCards = async (term) => {
     if (!term.trim()) {
       setSearchResults([]);
+      setSearchError(null);
       return;
     }
 
     try {
+      setSearchError(null);
       // Première tentative en français
       let response;
       try {
@@ -133,15 +136,22 @@ const DeckLists = () => {
       } catch (frenchError) {
         // Fallback en anglais si pas de résultats en français
         console.log('Recherche en français sans résultat, fallback vers l\'anglais');
-        response = await scryfallApi.get(`/cards/search`, {
-          params: {
-            q: term
-          }
-        });
+        try {
+          response = await scryfallApi.get(`/cards/search`, {
+            params: {
+              q: term
+            }
+          });
+        } catch (englishError) {
+          setSearchError(`Aucun résultat trouvé pour "${term}"`);
+          setSearchResults([]);
+          return;
+        }
       }
       setSearchResults(response.data.data || []);
     } catch (error) {
       console.error('Erreur lors de la recherche:', error);
+      setSearchError('Erreur lors de la recherche. Veuillez réessayer.');
       setSearchResults([]);
     }
   };
@@ -351,20 +361,7 @@ const DeckLists = () => {
   };
 
   const getColorSymbols = (card) => {
-    if (!card) return [];
-    
-    // Pour les cartes double face, utiliser les couleurs des deux faces
-    if (card.card_faces && card.card_faces.length > 0) {
-      const allColors = new Set();
-      card.card_faces.forEach(face => {
-        if (face.colors) {
-          face.colors.forEach(color => allColors.add(color));
-        }
-      });
-      return Array.from(allColors);
-    }
-    
-    return card.colors || [];
+    return getCardColors(card);
   };
 
   const getColorSymbolDisplay = (color) => {
@@ -465,7 +462,7 @@ const DeckLists = () => {
             </select>
             
             {/* Section commandant pour format Commander */}
-            {newDeckFormat === FORMATS.COMMANDER && (
+            {(newDeckFormat === FORMATS.COMMANDER || newDeckFormat === FORMATS.DUEL_COMMANDER) && (
               <div className="commander-selection">
                 <h4>Sélectionner un commandant (optionnel):</h4>
                 {selectedCommander ? (
@@ -664,6 +661,13 @@ const DeckLists = () => {
                 />
               </div>
 
+              {searchError && (
+                <div className="search-error">
+                  <AlertTriangle size={16} />
+                  <span>{searchError}</span>
+                </div>
+              )}
+
               {searchResults.length > 0 && (
                 <div className="search-results">
                   <h4>Résultats de recherche:</h4>
@@ -737,7 +741,7 @@ const DeckLists = () => {
                       {viewMode === 'grid' ? (
                         <div className="commander-card">
                           <img 
-                            src={selectedDeck.commander.image_uris?.small || selectedDeck.commander.image_uris?.normal}
+                            src={getCardFaceImage(selectedDeck.commander, cardFaces[selectedDeck.commander.id] || 0)}
                             alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
                             className="commander-image"
                           />
@@ -773,7 +777,7 @@ const DeckLists = () => {
                         <div className="card-text-item commander-text-item">
                           <div className="card-text-image">
                             <img 
-                              src={selectedDeck.commander.image_uris?.small || selectedDeck.commander.image_uris?.normal} 
+                              src={getCardFaceImage(selectedDeck.commander, cardFaces[selectedDeck.commander.id] || 0)}
                               alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
                               className="card-text-thumb"
                             />
@@ -886,7 +890,7 @@ const DeckLists = () => {
                                   <div key={card.id} className="card-text-item">
                                     <div className="card-text-image">
                                       <img 
-                                        src={card.image_uris?.small || card.image_uris?.normal} 
+                                        src={getCardFaceImage(card, cardFaces[card.id] || 0)}
                                         alt={card.printed_name || card.name}
                                         className="card-text-thumb"
                                       />

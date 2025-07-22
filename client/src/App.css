@@ -1710,7 +1710,8 @@ body {
 }
 
 .validation-error,
-.validation-warning {
+.validation-warning,
+.search-error {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1719,7 +1720,8 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.validation-error {
+.validation-error,
+.search-error {
   background-color: rgba(231, 76, 60, 0.1);
   border: 1px solid rgba(231, 76, 60, 0.3);
   color: var(--accent-color);
