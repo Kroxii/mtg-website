@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle, ChevronDown } from 'lucide-react';
 import CardItem from '../components/CardItem';
 import { scryfallApi, isDoubleFacedCard } from '../utils/api';
-import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned } from '../utils/banlists';
+import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned, isCardColorCompatible } from '../utils/banlists';
 
 const DeckLists = () => {
   const [decks, setDecks] = useState([]);
@@ -230,6 +230,13 @@ const DeckLists = () => {
       return;
     }
 
+    // Vérifier la compatibilité des couleurs pour Commander et Duel Commander
+    if (!isCardColorCompatible(card, selectedDeck.commander, selectedDeck.format)) {
+      const commanderName = selectedDeck.commander?.printed_name || selectedDeck.commander?.name || 'le commandant';
+      alert(`⚠️ Cette carte n'est pas compatible avec les couleurs de ${commanderName} ! Seules les cartes ayant des couleurs présentes dans l'identité couleur du commandant peuvent être ajoutées.`);
+      return;
+    }
+
     const updatedDecks = decks.map(deck => {
       if (deck.id === selectedDeck.id) {
         const updatedCards = { ...deck.cards };
@@ -341,6 +348,34 @@ const DeckLists = () => {
 
   const getCurrentViewModeLabel = () => {
     return viewModeOptions.find(option => option.value === viewMode)?.label || 'Visual Grid';
+  };
+
+  const getColorSymbols = (card) => {
+    if (!card) return [];
+    
+    // Pour les cartes double face, utiliser les couleurs des deux faces
+    if (card.card_faces && card.card_faces.length > 0) {
+      const allColors = new Set();
+      card.card_faces.forEach(face => {
+        if (face.colors) {
+          face.colors.forEach(color => allColors.add(color));
+        }
+      });
+      return Array.from(allColors);
+    }
+    
+    return card.colors || [];
+  };
+
+  const getColorSymbolDisplay = (color) => {
+    const colorMap = {
+      'W': '⚪', // Blanc
+      'U': '🔵', // Bleu
+      'B': '⚫', // Noir
+      'R': '🔴', // Rouge
+      'G': '🟢'  // Vert
+    };
+    return colorMap[color] || color;
   };
 
   const organizeCardsByType = (cards) => {
@@ -637,10 +672,11 @@ const DeckLists = () => {
                       const isLegendaryCreature = card.type_line && card.type_line.includes('Legendary') && card.type_line.includes('Creature');
                       const canBeCommander = card.oracle_text && card.oracle_text.includes('can be your commander');
                       const isCommanderEligible = isLegendaryCreature || canBeCommander;
-                      const isCommanderFormat = selectedDeck && selectedDeck.format === FORMATS.COMMANDER;
+                      const isCommanderFormat = selectedDeck && (selectedDeck.format === FORMATS.COMMANDER || selectedDeck.format === FORMATS.DUEL_COMMANDER);
+                      const isColorCompatible = isCardColorCompatible(card, selectedDeck.commander, selectedDeck.format);
                       
                       return (
-                        <div key={card.id} className="search-card">
+                        <div key={card.id} className={`search-card ${!isColorCompatible ? 'incompatible-card' : ''}`}>
                           <img 
                             src={card.image_uris?.small} 
                             alt={card.printed_name || card.name}
@@ -652,12 +688,26 @@ const DeckLists = () => {
                             {isCommanderEligible && (
                               <span className="commander-eligible">⭐ Peut être commandant</span>
                             )}
+                            {!isColorCompatible && selectedDeck.commander && (
+                              <span className="color-incompatible">❌ Couleurs incompatibles</span>
+                            )}
+                            {isColorCompatible && selectedDeck.commander && getColorSymbols(card).length > 0 && (
+                              <div className="card-colors">
+                                <span>Couleurs:</span>
+                                {getColorSymbols(card).map(color => (
+                                  <span key={color} className="color-symbol">
+                                    {getColorSymbolDisplay(color)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <div className="search-card-actions">
                             <button 
                               onClick={() => addCardToDeck(card)}
-                              className="add-card-btn"
-                              title="Ajouter au deck"
+                              className={`add-card-btn ${!isColorCompatible ? 'disabled' : ''}`}
+                              title={!isColorCompatible ? "Cette carte n'est pas compatible avec les couleurs du commandant" : "Ajouter au deck"}
+                              disabled={!isColorCompatible}
                             >
                               <Plus size={16} />
                             </button>
@@ -679,7 +729,7 @@ const DeckLists = () => {
               )}
 
               {/* Section Commandant pour les decks Commander */}
-              {selectedDeck.format === FORMATS.COMMANDER && (
+              {(selectedDeck.format === FORMATS.COMMANDER || selectedDeck.format === FORMATS.DUEL_COMMANDER) && (
                 <div className="commander-section">
                   <h4>Commandant:</h4>
                   {selectedDeck.commander ? (
@@ -687,10 +737,30 @@ const DeckLists = () => {
                       {viewMode === 'grid' ? (
                         <div className="commander-card">
                           <img 
-                            src={selectedDeck.commander.image_uris?.normal || selectedDeck.commander.image_uris?.large}
+                            src={selectedDeck.commander.image_uris?.small || selectedDeck.commander.image_uris?.normal}
                             alt={selectedDeck.commander.printed_name || selectedDeck.commander.name}
                             className="commander-image"
                           />
+                          <div className="commander-info">
+                            <h5>{selectedDeck.commander.printed_name || selectedDeck.commander.name}</h5>
+                            <div className="commander-colors">
+                              <strong>Identité couleur:</strong>
+                              {getColorSymbols(selectedDeck.commander).length > 0 ? (
+                                <span className="color-symbols">
+                                  {getColorSymbols(selectedDeck.commander).map(color => (
+                                    <span key={color} className="color-symbol">
+                                      {getColorSymbolDisplay(color)}
+                                    </span>
+                                  ))}
+                                </span>
+                              ) : (
+                                <span className="color-symbols">⚪ (Incolore)</span>
+                              )}
+                            </div>
+                            <p className="color-restriction-info">
+                              ℹ️ Seules les cartes ayant ces couleurs peuvent être ajoutées au deck.
+                            </p>
+                          </div>
                           <button 
                             onClick={() => removeCommander(selectedDeck.id)}
                             className="remove-commander-btn"
@@ -718,6 +788,20 @@ const DeckLists = () => {
                                 <span className="double-face-indicator" title="Carte double face">⚡</span>
                               )}
                             </span>
+                            <div className="commander-colors-inline">
+                              <strong>Couleurs:</strong>
+                              {getColorSymbols(selectedDeck.commander).length > 0 ? (
+                                <span className="color-symbols">
+                                  {getColorSymbols(selectedDeck.commander).map(color => (
+                                    <span key={color} className="color-symbol">
+                                      {getColorSymbolDisplay(color)}
+                                    </span>
+                                  ))}
+                                </span>
+                              ) : (
+                                <span className="color-symbols">⚪</span>
+                              )}
+                            </div>
                           </div>
                           <div className="card-text-actions">
                             <button 
@@ -734,6 +818,9 @@ const DeckLists = () => {
                   ) : (
                     <div className="no-commander">
                       <p>Aucun commandant sélectionné. Recherchez une créature légendaire et utilisez le bouton ⭐ pour la définir comme commandant.</p>
+                      <p className="color-restriction-warning">
+                        ⚠️ Une fois un commandant sélectionné, seules les cartes compatibles avec ses couleurs pourront être ajoutées.
+                      </p>
                     </div>
                   )}
                 </div>

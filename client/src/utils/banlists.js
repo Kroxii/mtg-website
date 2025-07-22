@@ -21,6 +21,43 @@ export const FORMAT_NAMES = {
   [FORMATS.PAUPER]: 'Pauper'
 };
 
+// Fonction pour extraire les couleurs d'une carte
+export const getCardColors = (card) => {
+  if (!card) return [];
+  
+  // Pour les cartes double face, utiliser les couleurs des deux faces
+  if (card.card_faces && card.card_faces.length > 0) {
+    const allColors = new Set();
+    card.card_faces.forEach(face => {
+      if (face.colors) {
+        face.colors.forEach(color => allColors.add(color));
+      }
+    });
+    return Array.from(allColors);
+  }
+  
+  return card.colors || [];
+};
+
+// Fonction pour vérifier si une carte peut être ajoutée dans un deck avec un commandant donné
+export const isCardColorCompatible = (card, commander, format) => {
+  // Si ce n'est pas un format Commander ou Duel Commander, pas de restriction
+  if (format !== FORMATS.COMMANDER && format !== FORMATS.DUEL_COMMANDER) {
+    return true;
+  }
+  
+  // Si pas de commandant, autoriser toutes les cartes
+  if (!commander) {
+    return true;
+  }
+  
+  const cardColors = getCardColors(card);
+  const commanderColors = getCardColors(commander);
+  
+  // Une carte peut être ajoutée si toutes ses couleurs sont présentes dans l'identité couleur du commandant
+  return cardColors.every(cardColor => commanderColors.includes(cardColor));
+};
+
 // Banlists (exemples - à mettre à jour avec les vraies listes)
 export const BANLISTS = {
   [FORMATS.COMMANDER]: [

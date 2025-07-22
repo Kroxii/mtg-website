@@ -3728,12 +3728,12 @@ body {
 .commander-card {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   background: var(--background-secondary);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius-large);
-  padding: 1.5rem;
-  max-width: 600px;
+  padding: 1rem;
+  max-width: 500px;
   width: 100%;
   transition: all 0.3s ease;
   position: relative;
@@ -3746,8 +3746,8 @@ body {
 }
 
 .commander-image {
-  width: 120px;
-  height: 168px;
+  width: 45px;
+  height: 63px;
   object-fit: cover;
   border-radius: var(--border-radius);
   border: 2px solid var(--accent-color);
@@ -3762,10 +3762,49 @@ body {
 
 .commander-info h5 {
   color: var(--text-accent);
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
   font-family: 'Cinzel', serif;
+}
+
+.commander-colors {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.commander-colors-inline {
+  margin: 0.3rem 0;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-symbols {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+}
+
+.color-symbol {
+  font-size: 1.1rem;
+  margin: 0 0.1rem;
+}
+
+.color-restriction-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0 0;
+  font-style: italic;
+}
+
+.color-restriction-warning {
+  font-size: 0.85rem;
+  color: var(--warning-color);
+  margin-top: 0.5rem;
+  font-style: italic;
 }
 
 .commander-info p {
@@ -3950,12 +3989,12 @@ body {
   .commander-card {
     flex-direction: column;
     text-align: center;
-    padding: 1.5rem;
+    padding: 1rem;
   }
   
   .commander-image {
-    width: 100px;
-    height: 140px;
+    width: 35px;
+    height: 49px;
   }
   
   .commander-info h5 {
@@ -4183,5 +4222,123 @@ body {
     text-align: center;
     gap: 0.5rem;
   }
+}
+
+/* Styles pour les cartes dans les résultats de recherche */
+.search-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--background-secondary);
+  transition: all 0.3s ease;
+}
+
+.search-card:hover {
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-hover);
+}
+
+.search-card.incompatible-card {
+  opacity: 0.6;
+  border-color: var(--error-color);
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.search-card-image {
+  width: 50px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: var(--border-radius-small);
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.search-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-card-info h5 {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-card-info p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.commander-eligible {
+  color: var(--accent-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.color-incompatible {
+  color: var(--error-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card-colors {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.search-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.add-card-btn, .set-commander-btn {
+  padding: 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-card-btn:hover, .set-commander-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.add-card-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--background-secondary);
+}
+
+.add-card-btn.disabled:hover {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+.set-commander-btn {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  font-size: 0.9rem;
 }
 }
