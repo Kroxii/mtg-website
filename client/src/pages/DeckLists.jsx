@@ -778,14 +778,26 @@ const DeckLists = () => {
                               className="card-text-thumb"
                             />
                             {isDoubleFacedCard(selectedDeck.commander) && (
-                              <span className="double-face-badge" title="Carte double face">⚡</span>
+                              <button 
+                                className="double-face-badge" 
+                                title="Retourner la carte"
+                                onClick={() => toggleCardFace(selectedDeck.commander.id)}
+                              >
+                                🔄
+                              </button>
                             )}
                           </div>
                           <div className="card-text-info">
                             <span className="card-text-name commander-text-name">
                               {selectedDeck.commander.printed_name || selectedDeck.commander.name}
                               {isDoubleFacedCard(selectedDeck.commander) && (
-                                <span className="double-face-indicator" title="Carte double face">⚡</span>
+                                <button 
+                                  className="double-face-indicator" 
+                                  title="Retourner la carte"
+                                  onClick={() => toggleCardFace(selectedDeck.commander.id)}
+                                >
+                                  🔄
+                                </button>
                               )}
                             </span>
                             <div className="commander-colors-inline">
@@ -863,6 +875,8 @@ const DeckLists = () => {
                                     onToggleFoil={toggleCardFoil}
                                     onRemoveCard={removeCardFromDeck}
                                     isFoil={foilCards[card.id] || false}
+                                    onToggleFace={toggleCardFace}
+                                    currentFace={cardFaces[card.id] || 0}
                                   />
                                 ))}
                               </div>
@@ -877,14 +891,26 @@ const DeckLists = () => {
                                         className="card-text-thumb"
                                       />
                                       {isDoubleFacedCard(card) && (
-                                        <span className="double-face-badge" title="Carte double face">⚡</span>
+                                        <button 
+                                          className="double-face-badge" 
+                                          title="Retourner la carte"
+                                          onClick={() => toggleCardFace(card.id)}
+                                        >
+                                          🔄
+                                        </button>
                                       )}
                                     </div>
                                     <div className="card-text-info">
                                       <span className="card-text-name">
                                         {card.printed_name || card.name}
                                         {isDoubleFacedCard(card) && (
-                                          <span className="double-face-indicator" title="Carte double face">⚡</span>
+                                          <button 
+                                            className="double-face-indicator" 
+                                            title="Retourner la carte"
+                                            onClick={() => toggleCardFace(card.id)}
+                                          >
+                                            🔄
+                                          </button>
                                         )}
                                         {foilCards[card.id] && (
                                           <span className="foil-indicator" title="Version foil">✨</span>

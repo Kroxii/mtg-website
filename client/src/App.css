@@ -1808,17 +1808,39 @@ body {
   position: absolute;
   top: 2px;
   right: 2px;
-  background: rgba(243, 156, 18, 0.9);
+  background: rgba(52, 152, 219, 0.9);
   color: white;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  animation: pulse 2s infinite;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.double-face-badge:hover {
+  background: rgba(52, 152, 219, 1);
+  transform: scale(1.1);
+}
+
+.double-face-indicator {
+  background: none;
+  border: none;
+  color: rgba(52, 152, 219, 0.9);
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 0.3rem;
+  transition: all 0.2s ease;
+}
+
+.double-face-indicator:hover {
+  color: rgba(52, 152, 219, 1);
+  transform: scale(1.1);
 }
 
 .card-list-info, .card-text-info {
@@ -2869,6 +2891,17 @@ body {
 
 .card-indicator.double-face {
   background: rgba(52, 152, 219, 0.9);
+}
+
+.card-indicator.clickable {
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.card-indicator.clickable:hover {
+  transform: scale(1.1);
+  background: rgba(52, 152, 219, 1);
 }
 
 .card-indicator.foil-indicator {

@@ -129,9 +129,13 @@ const CardItem = ({
 
           {/* Indicateurs visuels */}
           {isDoubleFaced && (
-            <div className="card-indicator double-face" title="Carte double face">
-              <Eye size={14} />
-            </div>
+            <button 
+              className="card-indicator double-face clickable" 
+              title="Retourner la carte (clic)"
+              onClick={handleToggleFace}
+            >
+              🔄
+            </button>
           )}
 
           {isFoil && (
