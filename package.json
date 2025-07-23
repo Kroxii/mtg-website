@@ -6,8 +6,13 @@
     "dev": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "preview": "cd client && npm run preview",
-    "server": "cd server && npm run dev"
+    "server": "cd server && npm run dev",
+    "server:start": "cd server && node server.js",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "start": "echo 'Démarrez le serveur avec: npm run server:start' && echo 'Puis le client avec: npm run dev'"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
   "workspaces": ["client", "server"]
 }

@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Library, FileText, Zap, Plus, Search, TrendingUp } from 'lucide-react';
+import ServerStatus from '../components/ServerStatus';
 
 const Home = () => {
   return (
     <div className="home-container">
+      {/* Statut du serveur */}
+      <ServerStatus />
+      
       <div className="hero-section">
         <div className="hero-content">
           <div className="hero-icon">

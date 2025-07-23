@@ -100,6 +100,67 @@ body {
 }
 
 /* ===============================================
+   COMPOSANT STATUT SERVEUR
+   =============================================== */
+
+.server-status {
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.9rem;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.server-status.loading {
+  border-color: var(--secondary-color);
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--secondary-color);
+  text-align: center;
+}
+
+.server-status.error {
+  border-color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  text-align: center;
+}
+
+.server-status.success {
+  border-color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.server-info {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.server-info p {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+}
+
+.retry-btn {
+  margin-left: 1rem;
+  padding: 0.25rem 0.5rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background-color 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: #c82333;
+}
+
+/* ===============================================
    NAVIGATION
    =============================================== */
 
