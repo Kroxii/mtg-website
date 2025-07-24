@@ -3,7 +3,8 @@ import { scryfallApi, scryfallApiGeneral, apiUtils, formatSetDate } from '../uti
 import { collectionService } from '../services/backendApi';
 import { useAuth } from '../hooks/useAuth';
 import CardItem from '../components/CardItem';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Grid, List } from 'lucide-react';
+import './FullsetSets.css';
 
 const Collection = () => {
   const { user, isAuthenticated } = useAuth();
@@ -15,6 +16,8 @@ const Collection = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('date_desc'); // 'date_desc', 'date_asc', 'name_asc', 'name_desc'
+  const [displayMode, setDisplayMode] = useState('sets'); // 'sets' ou 'cards'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' ou 'list'
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -137,6 +140,7 @@ const Collection = () => {
 
   const fetchCardsFromSet = async (setCode) => {
     setLoading(true);
+    setDisplayMode('cards');
     try {
       // Première tentative en français
       let response;
@@ -180,6 +184,7 @@ const Collection = () => {
       fetchCardsFromSet(setCode);
     } else {
       setCards([]);
+      setDisplayMode('sets');
     }
   };
 
@@ -216,6 +221,25 @@ const Collection = () => {
     const cardInCollection = selectedCollection.cards.find(c => c.card === cardId);
     return cardInCollection ? cardInCollection.quantity : 0;
   };
+
+  const getSetProgress = (setCode) => {
+    if (!selectedCollection || !selectedCollection.cards) return { owned: 0, total: 0, percentage: 0 };
+    
+    const setCards = selectedCollection.cards.filter(card => 
+      card.set_code && card.set_code.toLowerCase() === setCode.toLowerCase()
+    );
+    
+    const totalCards = sets.find(set => set.code === setCode)?.card_count || 0;
+    const ownedCards = setCards.length;
+    const percentage = totalCards > 0 ? Math.round((ownedCards / totalCards) * 100) : 0;
+    
+    return { owned: ownedCards, total: totalCards, percentage };
+  };
+
+  const filteredSets = sets.filter(set => 
+    set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    set.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const filteredCards = cards.filter(card => 
     card.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -269,21 +293,45 @@ const Collection = () => {
         </div>
       )}
 
-      <div className="collection-controls">
+      <div className="fullset-controls">
         <div className="control-group">
-          <Filter size={20} />
-          <select 
-            value={selectedSet} 
-            onChange={(e) => handleSetChange(e.target.value)}
-            className="set-selector"
+          <button 
+            className={`view-toggle ${displayMode === 'sets' ? 'active' : ''}`}
+            onClick={() => {
+              setDisplayMode('sets');
+              setSelectedSet('');
+              setCards([]);
+            }}
           >
-            <option value="">Choisir une extension</option>
-            {sets.map(set => (
-              <option key={set.code} value={set.code}>
-                {formatSetDisplay(set)}
-              </option>
-            ))}
-          </select>
+            Extensions
+          </button>
+          {selectedSet && (
+            <button 
+              className={`view-toggle ${displayMode === 'cards' ? 'active' : ''}`}
+              onClick={() => setDisplayMode('cards')}
+            >
+              Cartes
+            </button>
+          )}
+        </div>
+
+        <div className="control-group">
+          <div className="view-mode-controls">
+            <button 
+              className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grille"
+            >
+              <Grid size={18} />
+            </button>
+            <button 
+              className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="Liste"
+            >
+              <List size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="control-group">
@@ -303,63 +351,116 @@ const Collection = () => {
           </select>
         </div>
 
-        {selectedSet && (
-          <div className="control-group">
-            <Search size={20} />
-            <input
-              type="text"
-              placeholder="Rechercher une carte..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-        )}
-      </div>
-
-      {selectedSet && (
-        <div className="selected-set-info">
-          {(() => {
-            const currentSet = sets.find(set => set.code === selectedSet);
-            if (!currentSet) return null;
-            
-            return (
-              <div className="set-details">
-                <h3>{currentSet.name}</h3>
-                <div className="set-meta">
-                  <span>Code: {currentSet.code.toUpperCase()}</span>
-                  <span>•</span>
-                  <span>Sortie: {formatSetDate(currentSet.released_at)}</span>
-                  <span>•</span>
-                  <span>{currentSet.card_count} cartes</span>
-                </div>
-              </div>
-            );
-          })()}
+        <div className="control-group">
+          <Search size={20} />
+          <input
+            type="text"
+            placeholder={displayMode === 'sets' ? "Rechercher une extension..." : "Rechercher une carte..."}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
         </div>
-      )}
+      </div>
 
       {loading && (
         <div className="loading">
-          <p>Chargement des cartes...</p>
+          <p>Chargement...</p>
         </div>
       )}
 
-      <div className="cards-grid">
-        {filteredCards.map(card => (
-          <CardItem
-            key={card.id}
-            card={card}
-            quantity={getCardQuantity(card.id)}
-            onQuantityChange={(newQuantity) => handleQuantityChange(card, newQuantity)}
-          />
-        ))}
-      </div>
-
-      {selectedSet && !loading && filteredCards.length === 0 && (
-        <div className="no-results">
-          <p>Aucune carte trouvée pour cette recherche.</p>
+      {displayMode === 'sets' && (
+        <div className={`fullset-sets-grid ${viewMode}`}>
+          {filteredSets.map(set => {
+            const progress = getSetProgress(set.code);
+            return (
+              <div 
+                key={set.code} 
+                className="fullset-set-card"
+                onClick={() => handleSetChange(set.code)}
+              >
+                <div className="set-icon">
+                  {set.icon_svg_uri ? (
+                    <img src={set.icon_svg_uri} alt={set.name} />
+                  ) : (
+                    <div className="set-icon-placeholder">{set.code.toUpperCase()}</div>
+                  )}
+                </div>
+                
+                <div className="set-info">
+                  <h3 className="set-name">{set.name}</h3>
+                  <div className="set-code">{set.code.toUpperCase()}</div>
+                  <div className="set-meta">
+                    <span>{progress.owned}/{set.card_count || 0}</span>
+                    <span className="progress-percentage">{progress.percentage}%</span>
+                    <span className="set-date">{formatSetDate(set.released_at)}</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${progress.percentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <button className="set-details-btn">
+                  Voir les détails
+                </button>
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {displayMode === 'cards' && selectedSet && (
+        <>
+          <div className="selected-set-info">
+            {(() => {
+              const currentSet = sets.find(set => set.code === selectedSet);
+              if (!currentSet) return null;
+              
+              return (
+                <div className="set-details">
+                  <button 
+                    className="back-btn"
+                    onClick={() => {
+                      setDisplayMode('sets');
+                      setSelectedSet('');
+                      setCards([]);
+                    }}
+                  >
+                    ← Retour aux extensions
+                  </button>
+                  <h3>{currentSet.name}</h3>
+                  <div className="set-meta">
+                    <span>Code: {currentSet.code.toUpperCase()}</span>
+                    <span>•</span>
+                    <span>Sortie: {formatSetDate(currentSet.released_at)}</span>
+                    <span>•</span>
+                    <span>{currentSet.card_count} cartes</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="cards-grid">
+            {filteredCards.map(card => (
+              <CardItem
+                key={card.id}
+                card={card}
+                quantity={getCardQuantity(card.id)}
+                onQuantityChange={(newQuantity) => handleQuantityChange(card, newQuantity)}
+              />
+            ))}
+          </div>
+
+          {!loading && filteredCards.length === 0 && (
+            <div className="no-results">
+              <p>Aucune carte trouvée pour cette recherche.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
