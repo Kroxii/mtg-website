@@ -1,24 +1,63 @@
 import { useState, useEffect } from 'react';
 import { scryfallApi, scryfallApiGeneral, apiUtils, formatSetDate } from '../utils/api';
+import { collectionService } from '../services/backendApi';
+import { useAuth } from '../hooks/useAuth';
 import CardItem from '../components/CardItem';
 import { Search, Filter } from 'lucide-react';
 
 const Collection = () => {
+  const { user, isAuthenticated } = useAuth();
   const [sets, setSets] = useState([]);
   const [selectedSet, setSelectedSet] = useState('');
   const [cards, setCards] = useState([]);
-  const [collection, setCollection] = useState({});
+  const [collections, setCollections] = useState([]);
+  const [selectedCollection, setSelectedCollection] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('date_desc'); // 'date_desc', 'date_asc', 'name_asc', 'name_desc'
 
   useEffect(() => {
-    loadCollection();
-  }, []);
+    if (isAuthenticated) {
+      loadUserCollections();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchSets();
   }, [sortOrder]);
+
+  const loadUserCollections = async () => {
+    try {
+      const result = await collectionService.getMyCollections();
+      if (result.success) {
+        setCollections(result.collections);
+        // Sélectionner la première collection par défaut, ou créer une nouvelle si aucune
+        if (result.collections.length > 0) {
+          setSelectedCollection(result.collections[0]);
+        } else {
+          await createDefaultCollection();
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des collections:', error);
+    }
+  };
+
+  const createDefaultCollection = async () => {
+    try {
+      const result = await collectionService.createCollection({
+        name: 'Ma Collection',
+        description: 'Ma collection principale de cartes Magic',
+        isPublic: false
+      });
+      if (result.success) {
+        setCollections([result.collection]);
+        setSelectedCollection(result.collection);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création de la collection par défaut:', error);
+    }
+  };
 
   const fetchSets = async () => {
     try {
@@ -144,32 +183,38 @@ const Collection = () => {
     }
   };
 
-  const handleQuantityChange = (cardId, newQuantity) => {
-    const updatedCollection = { ...collection };
-    if (newQuantity === 0) {
-      delete updatedCollection[cardId];
-    } else {
-      updatedCollection[cardId] = newQuantity;
-    }
-    setCollection(updatedCollection);
-    saveCollection(updatedCollection);
-  };
-
-  const saveCollection = (collectionData) => {
-    localStorage.setItem('mtg-collection', JSON.stringify(collectionData));
-  };
-
-  const loadCollection = () => {
-    const saved = localStorage.getItem('mtg-collection');
-    if (saved) {
-      setCollection(JSON.parse(saved));
-    }
+  const handleQuantityChange = async (card, newQuantity) => {
+    if (!selectedCollection) return;
     
-    // Charger les préférences de tri
-    const savedSortOrder = localStorage.getItem('mtg-sort-order');
-    if (savedSortOrder) {
-      setSortOrder(savedSortOrder);
+    try {
+      if (newQuantity === 0) {
+        // Supprimer la carte de la collection
+        const cardInCollection = selectedCollection.cards.find(c => c.card === card.id);
+        if (cardInCollection) {
+          await collectionService.removeCardFromCollection(selectedCollection._id, cardInCollection._id);
+        }
+      } else {
+        // Ajouter ou mettre à jour la carte dans la collection
+        await collectionService.addCardToCollection(selectedCollection._id, {
+          cardId: card.id,
+          quantity: newQuantity,
+          condition: 'near_mint',
+          language: 'fr',
+          foil: false
+        });
+      }
+      
+      // Recharger les collections pour avoir les données à jour
+      await loadUserCollections();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la collection:', error);
     }
+  };
+
+  const getCardQuantity = (cardId) => {
+    if (!selectedCollection || !selectedCollection.cards) return 0;
+    const cardInCollection = selectedCollection.cards.find(c => c.card === cardId);
+    return cardInCollection ? cardInCollection.quantity : 0;
   };
 
   const filteredCards = cards.filter(card => 
@@ -177,14 +222,52 @@ const Collection = () => {
     (card.printed_name && card.printed_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const totalCards = Object.values(collection).reduce((sum, quantity) => sum + quantity, 0);
+  const totalCards = selectedCollection?.totalCards || 0;
+  const totalUniqueCards = selectedCollection?.cards?.length || 0;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="collection-container">
+        <div className="collection-header">
+          <h2>Connexion requise</h2>
+          <p>Veuillez vous connecter pour accéder à votre collection.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="collection-container">
       <div className="collection-header">
         <h2>Ma Collection Magic</h2>
-        <p>Total de cartes: {totalCards}</p>
+        <div className="collection-stats">
+          <p>Total de cartes: {totalCards}</p>
+          <p>Cartes uniques: {totalUniqueCards}</p>
+          {selectedCollection && (
+            <p>Collection active: {selectedCollection.name}</p>
+          )}
+        </div>
       </div>
+
+      {collections.length > 1 && (
+        <div className="collection-selector">
+          <label htmlFor="collection-select">Collection:</label>
+          <select 
+            id="collection-select"
+            value={selectedCollection?._id || ''} 
+            onChange={(e) => {
+              const collection = collections.find(c => c._id === e.target.value);
+              setSelectedCollection(collection);
+            }}
+          >
+            {collections.map(collection => (
+              <option key={collection._id} value={collection._id}>
+                {collection.name} ({collection.totalCards || 0} cartes)
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="collection-controls">
         <div className="control-group">
@@ -267,8 +350,8 @@ const Collection = () => {
           <CardItem
             key={card.id}
             card={card}
-            quantity={collection[card.id] || 0}
-            onQuantityChange={handleQuantityChange}
+            quantity={getCardQuantity(card.id)}
+            onQuantityChange={(newQuantity) => handleQuantityChange(card, newQuantity)}
           />
         ))}
       </div>

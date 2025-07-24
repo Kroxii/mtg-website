@@ -4,7 +4,7 @@ import User from '../models/User.js';
 /**
  * Middleware d'authentification JWT
  */
-export const authenticate = async (req, res, next) => {
+export const authenticateToken = async (req, res, next) => {
   try {
     let token;
 
@@ -25,7 +25,7 @@ export const authenticate = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Récupérer l'utilisateur
-      const user = await User.findById(decoded.id).select('-password');
+      const user = await User.findById(decoded.userId).select('-password');
       
       if (!user) {
         return res.status(401).json({

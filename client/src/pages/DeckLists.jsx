@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, Save, X, Grid, List, AlertTriangle, ChevronDown } from 'lucide-react';
 import CardItem from '../components/CardItem';
 import { scryfallApi, isDoubleFacedCard, getCardFaceImage } from '../utils/api';
+import { deckService } from '../services/backendApi';
+import { useAuth } from '../hooks/useAuth';
 import { FORMATS, FORMAT_NAMES, validateDeck, isCardBanned, isCardColorCompatible, getCardColors } from '../utils/banlists';
 
 const DeckLists = () => {
+  const { user, isAuthenticated } = useAuth();
   const [decks, setDecks] = useState([]);
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -24,8 +27,10 @@ const DeckLists = () => {
   const [foilCards, setFoilCards] = useState({}); // Pour stocker les cartes foil
 
   useEffect(() => {
-    loadDecks();
-  }, []);
+    if (isAuthenticated) {
+      loadUserDecks();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (selectedDeck) {
@@ -46,13 +51,17 @@ const DeckLists = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isViewMenuOpen]);
 
-  const loadDecks = () => {
-    const saved = localStorage.getItem('mtg-decks');
-    if (saved) {
-      setDecks(JSON.parse(saved));
+  const loadUserDecks = async () => {
+    try {
+      const result = await deckService.getMyDecks();
+      if (result.success) {
+        setDecks(result.decks);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des decks:', error);
     }
     
-    // Charger les états des cartes (faces et foil)
+    // Charger les états des cartes (faces et foil) depuis localStorage
     const savedCardFaces = localStorage.getItem('mtg-card-faces');
     if (savedCardFaces) {
       setCardFaces(JSON.parse(savedCardFaces));
@@ -64,10 +73,6 @@ const DeckLists = () => {
     }
   };
 
-  const saveDecks = (decksData) => {
-    localStorage.setItem('mtg-decks', JSON.stringify(decksData));
-  };
-
   const saveCardFaces = (cardFacesData) => {
     localStorage.setItem('mtg-card-faces', JSON.stringify(cardFacesData));
   };
@@ -76,43 +81,59 @@ const DeckLists = () => {
     localStorage.setItem('mtg-foil-cards', JSON.stringify(foilCardsData));
   };
 
-  const createDeck = () => {
+  const createDeck = async () => {
     if (newDeckName.trim()) {
-      const newDeck = {
-        id: Date.now(),
-        name: newDeckName,
-        format: newDeckFormat,
-        cards: {},
-        commander: selectedCommander || null,
-        created: new Date().toISOString()
-      };
-      const updatedDecks = [...decks, newDeck];
-      setDecks(updatedDecks);
-      saveDecks(updatedDecks);
-      setNewDeckName('');
-      setNewDeckFormat(FORMATS.COMMANDER);
-      setSelectedCommander(null);
-      setCommanderSearchTerm('');
-      setCommanderSearchResults([]);
-      setIsCreating(false);
+      try {
+        const deckData = {
+          name: newDeckName,
+          format: newDeckFormat,
+          description: '',
+          isPublic: false,
+          commander: selectedCommander ? selectedCommander.id : null
+        };
+        
+        const result = await deckService.createDeck(deckData);
+        if (result.success) {
+          await loadUserDecks(); // Recharger la liste des decks
+          setNewDeckName('');
+          setNewDeckFormat(FORMATS.COMMANDER);
+          setSelectedCommander(null);
+          setCommanderSearchTerm('');
+          setCommanderSearchResults([]);
+          setIsCreating(false);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la création du deck:', error);
+      }
     }
   };
 
-  const deleteDeck = (deckId) => {
-    const updatedDecks = decks.filter(deck => deck.id !== deckId);
-    setDecks(updatedDecks);
-    saveDecks(updatedDecks);
-    if (selectedDeck && selectedDeck.id === deckId) {
-      setSelectedDeck(null);
+  const deleteDeck = async (deckId) => {
+    try {
+      const result = await deckService.deleteDeck(deckId);
+      if (result.success) {
+        await loadUserDecks(); // Recharger la liste des decks
+        if (selectedDeck && selectedDeck._id === deckId) {
+          setSelectedDeck(null);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression du deck:', error);
     }
   };
 
-  const updateDeckName = (deckId, newName) => {
-    const updatedDecks = decks.map(deck => 
-      deck.id === deckId ? { ...deck, name: newName } : deck
-    );
-    setDecks(updatedDecks);
-    saveDecks(updatedDecks);
+  const updateDeckName = async (deckId, newName) => {
+    try {
+      const result = await deckService.updateDeck(deckId, { name: newName });
+      if (result.success) {
+        await loadUserDecks(); // Recharger la liste des decks
+        if (selectedDeck && selectedDeck._id === deckId) {
+          setSelectedDeck(result.deck);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du deck:', error);
+    }
     setEditingDeck(null);
   };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
+import { authService } from '../services/backendApi';
 
 // Contexte d'authentification
 const AuthContext = createContext();
@@ -19,130 +20,45 @@ export const AuthProvider = ({ children }) => {
 
   // Charger l'utilisateur depuis le localStorage au démarrage
   useEffect(() => {
-    const storedUser = localStorage.getItem('mtg_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Erreur lors du chargement de l\'utilisateur:', error);
-        localStorage.removeItem('mtg_user');
-      }
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
     }
-
-    // Créer un utilisateur de test s'il n'y en a pas
-    const users = JSON.parse(localStorage.getItem('mtg_users') || '[]');
-    if (users.length === 0) {
-      const testUser = {
-        id: '1',
-        email: 'test@mtg.com',
-        password: 'test123',
-        nom: 'Testeur',
-        prenom: 'Magic',
-        dateCreation: new Date().toISOString(),
-        collection: [],
-        deckLists: []
-      };
-      users.push(testUser);
-      localStorage.setItem('mtg_users', JSON.stringify(users));
-      console.log('Utilisateur de test créé: test@mtg.com / test123');
-    }
-
     setLoading(false);
   }, []);
 
   // Fonction de connexion
   const login = async (email, password) => {
     try {
-      // Validation des entrées
-      if (!email || !password) {
-        throw new Error('Email et mot de passe sont obligatoires');
+      const result = await authService.login(email, password);
+      if (result.success) {
+        setUser(result.user);
       }
-
-      // Récupérer les utilisateurs stockés
-      const users = JSON.parse(localStorage.getItem('mtg_users') || '[]');
-      
-      // Vérifier les identifiants
-      const user = users.find(u => u.email === email && u.password === password);
-      
-      if (!user) {
-        throw new Error('Email ou mot de passe incorrect');
-      }
-
-      // Connexion réussie
-      const userWithoutPassword = { ...user };
-      delete userWithoutPassword.password;
-      
-      setUser(userWithoutPassword);
-      localStorage.setItem('mtg_user', JSON.stringify(userWithoutPassword));
-      
-      return { success: true, user: userWithoutPassword };
+      return result;
     } catch (error) {
       console.error('Erreur de connexion:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: 'Erreur de connexion' };
     }
   };
 
   // Fonction d'inscription
   const register = async (userData) => {
     try {
-      const { email, password, nom, prenom } = userData;
-
-      // Validation des données
-      if (!email || !password || !nom || !prenom) {
-        throw new Error('Tous les champs sont obligatoires');
+      const result = await authService.register(userData);
+      if (result.success) {
+        setUser(result.user);
       }
-
-      if (password.length < 6) {
-        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
-      }
-
-      // Validation de l'email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        throw new Error('Adresse email invalide');
-      }
-
-      // Récupérer les utilisateurs existants
-      const users = JSON.parse(localStorage.getItem('mtg_users') || '[]');
-      
-      // Vérifier si l'email existe déjà
-      if (users.find(u => u.email === email)) {
-        throw new Error('Un compte avec cette adresse email existe déjà');
-      }
-
-      // Créer le nouvel utilisateur
-      const newUser = {
-        id: Date.now().toString(),
-        email,
-        password, // En production, il faudrait hasher le mot de passe
-        nom,
-        prenom,
-        dateCreation: new Date().toISOString(),
-        collection: [],
-        deckLists: []
-      };
-
-      // Sauvegarder le nouvel utilisateur
-      users.push(newUser);
-      localStorage.setItem('mtg_users', JSON.stringify(users));
-
-      // Connecter automatiquement l'utilisateur
-      const userWithoutPassword = { ...newUser };
-      delete userWithoutPassword.password;
-      
-      setUser(userWithoutPassword);
-      localStorage.setItem('mtg_user', JSON.stringify(userWithoutPassword));
-
-      return { success: true };
+      return result;
     } catch (error) {
-      return { success: false, error: error.message };
+      console.error('Erreur d\'inscription:', error);
+      return { success: false, error: 'Erreur lors de l\'inscription' };
     }
   };
 
   // Fonction de déconnexion
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('mtg_user');
+    authService.logout();
   };
 
   const value = {
