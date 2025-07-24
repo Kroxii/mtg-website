@@ -14,6 +14,7 @@ import userRoutes from './src/routes/users.js';
 import collectionRoutes from './src/routes/collections.js';
 import deckRoutes from './src/routes/decks.js';
 import cardRoutes from './src/routes/cards.js';
+import statsRoutes from './src/routes/stats.js';
 
 // Import de la configuration de la base de données
 import connectDB from './src/config/database.js';
@@ -80,6 +81,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/decks', deckRoutes);
 app.use('/api/cards', cardRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Route de santé
 app.get('/api/health', (req, res) => {

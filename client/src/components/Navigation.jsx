@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { Home, Library, FileText, User, LogOut, Zap } from 'lucide-react';
+import { Home, Library, FileText, User, LogOut, Zap, BarChart3 } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -31,6 +31,15 @@ const Navigation = () => {
           </li>
           {isAuthenticated && (
             <>
+              <li>
+                <Link 
+                  to="/dashboard" 
+                  className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+                >
+                  <BarChart3 size={18} />
+                  Tableau de bord
+                </Link>
+              </li>
               <li>
                 <Link 
                   to="/collection" 

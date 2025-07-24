@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
+import SimpleDashboard from './pages/SimpleDashboard';
 import Collection from './pages/Collection';
 import DeckLists from './pages/DeckLists';
 import Login from './pages/Login';
@@ -41,6 +42,14 @@ const AppContent = () => {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <SimpleDashboard />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/collection" 
             element={

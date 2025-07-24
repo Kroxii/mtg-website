@@ -4,13 +4,13 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost:5000/api';
 
 // Instance Axios pour les appels API backend avec authentification
-const backendApi = axios.create({
+const backendApiInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000
 });
 
 // Intercepteur pour ajouter le token d'authentification automatiquement
-backendApi.interceptors.request.use(
+backendApiInstance.interceptors.request.use(
   (config) => {
     const user = JSON.parse(localStorage.getItem('mtg_user') || '{}');
     if (user.token) {
@@ -24,7 +24,7 @@ backendApi.interceptors.request.use(
 );
 
 // Intercepteur pour gérer les erreurs d'authentification
-backendApi.interceptors.response.use(
+backendApiInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -41,7 +41,7 @@ backendApi.interceptors.response.use(
 export const authService = {
   login: async (email, password) => {
     try {
-      const response = await backendApi.post('/auth/login', { email, password });
+      const response = await backendApiInstance.post('/auth/login', { email, password });
       const { token, user } = response.data;
       
       // Stocker le token et les infos utilisateur
@@ -59,7 +59,7 @@ export const authService = {
 
   register: async (userData) => {
     try {
-      const response = await backendApi.post('/auth/register', userData);
+      const response = await backendApiInstance.post('/auth/register', userData);
       const { token, user } = response.data;
       
       // Stocker le token et les infos utilisateur
@@ -97,7 +97,7 @@ export const collectionService = {
   // Récupérer toutes les collections de l'utilisateur connecté
   getMyCollections: async () => {
     try {
-      const response = await backendApi.get('/collections');
+      const response = await backendApiInstance.get('/collections');
       return { success: true, collections: response.data.collections };
     } catch (error) {
       return {
@@ -110,7 +110,7 @@ export const collectionService = {
   // Créer une nouvelle collection
   createCollection: async (collectionData) => {
     try {
-      const response = await backendApi.post('/collections', {
+      const response = await backendApiInstance.post('/collections', {
         name: collectionData.name || 'Ma Collection',
         description: collectionData.description || '',
         isPublic: collectionData.isPublic || false
@@ -127,7 +127,7 @@ export const collectionService = {
   // Récupérer une collection par ID
   getCollectionById: async (collectionId) => {
     try {
-      const response = await backendApi.get(`/collections/${collectionId}`);
+      const response = await backendApiInstance.get(`/collections/${collectionId}`);
       return { success: true, collection: response.data.collection };
     } catch (error) {
       return {
@@ -140,7 +140,7 @@ export const collectionService = {
   // Mettre à jour une collection
   updateCollection: async (collectionId, updateData) => {
     try {
-      const response = await backendApi.put(`/collections/${collectionId}`, updateData);
+      const response = await backendApiInstance.put(`/collections/${collectionId}`, updateData);
       return { success: true, collection: response.data.collection };
     } catch (error) {
       return {
@@ -153,7 +153,7 @@ export const collectionService = {
   // Supprimer une collection
   deleteCollection: async (collectionId) => {
     try {
-      await backendApi.delete(`/collections/${collectionId}`);
+      await backendApiInstance.delete(`/collections/${collectionId}`);
       return { success: true };
     } catch (error) {
       return {
@@ -166,7 +166,7 @@ export const collectionService = {
   // Ajouter une carte à une collection
   addCardToCollection: async (collectionId, cardData) => {
     try {
-      const response = await backendApi.post(`/collections/${collectionId}/cards`, {
+      const response = await backendApiInstance.post(`/collections/${collectionId}/cards`, {
         card: cardData.cardId,
         quantity: cardData.quantity || 1,
         condition: cardData.condition || 'near_mint',
@@ -186,7 +186,7 @@ export const collectionService = {
   // Retirer une carte d'une collection
   removeCardFromCollection: async (collectionId, cardItemId) => {
     try {
-      await backendApi.delete(`/collections/${collectionId}/cards/${cardItemId}`);
+      await backendApiInstance.delete(`/collections/${collectionId}/cards/${cardItemId}`);
       return { success: true };
     } catch (error) {
       return {
@@ -203,7 +203,7 @@ export const deckService = {
   // Récupérer tous les decks de l'utilisateur connecté
   getMyDecks: async () => {
     try {
-      const response = await backendApi.get('/decks');
+      const response = await backendApiInstance.get('/decks');
       return { success: true, decks: response.data.decks };
     } catch (error) {
       return {
@@ -216,7 +216,7 @@ export const deckService = {
   // Créer un nouveau deck
   createDeck: async (deckData) => {
     try {
-      const response = await backendApi.post('/decks', {
+      const response = await backendApiInstance.post('/decks', {
         name: deckData.name,
         description: deckData.description || '',
         format: deckData.format,
@@ -235,7 +235,7 @@ export const deckService = {
   // Récupérer un deck par ID
   getDeckById: async (deckId) => {
     try {
-      const response = await backendApi.get(`/decks/${deckId}`);
+      const response = await backendApiInstance.get(`/decks/${deckId}`);
       return { success: true, deck: response.data.deck };
     } catch (error) {
       return {
@@ -248,7 +248,7 @@ export const deckService = {
   // Mettre à jour un deck
   updateDeck: async (deckId, updateData) => {
     try {
-      const response = await backendApi.put(`/decks/${deckId}`, updateData);
+      const response = await backendApiInstance.put(`/decks/${deckId}`, updateData);
       return { success: true, deck: response.data.deck };
     } catch (error) {
       return {
@@ -261,7 +261,7 @@ export const deckService = {
   // Supprimer un deck
   deleteDeck: async (deckId) => {
     try {
-      await backendApi.delete(`/decks/${deckId}`);
+      await backendApiInstance.delete(`/decks/${deckId}`);
       return { success: true };
     } catch (error) {
       return {
@@ -274,7 +274,7 @@ export const deckService = {
   // Ajouter une carte à un deck
   addCardToDeck: async (deckId, cardData) => {
     try {
-      const response = await backendApi.post(`/decks/${deckId}/cards`, {
+      const response = await backendApiInstance.post(`/decks/${deckId}/cards`, {
         card: cardData.cardId,
         quantity: cardData.quantity || 1,
         isSideboard: cardData.isSideboard || false,
@@ -292,7 +292,7 @@ export const deckService = {
   // Retirer une carte d'un deck
   removeCardFromDeck: async (deckId, cardItemId) => {
     try {
-      await backendApi.delete(`/decks/${deckId}/cards/${cardItemId}`);
+      await backendApiInstance.delete(`/decks/${deckId}/cards/${cardItemId}`);
       return { success: true };
     } catch (error) {
       return {
@@ -303,4 +303,74 @@ export const deckService = {
   }
 };
 
-export default backendApi;
+// ===== SERVICES DE STATISTIQUES =====
+
+export const dashboardService = {
+  // Récupérer les statistiques du tableau de bord
+  getDashboardStats: async () => {
+    try {
+      const response = await backendApiInstance.get('/stats/dashboard');
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erreur lors de la récupération des statistiques'
+      };
+    }
+  },
+
+  // Récupérer les données de croissance de la collection
+  getCollectionGrowth: async (months = 12) => {
+    try {
+      const response = await backendApiInstance.get(`/stats/growth?months=${months}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erreur lors de la récupération des données de croissance'
+      };
+    }
+  },
+
+  // Récupérer les données de comparaison entre utilisateurs
+  getUserComparisons: async () => {
+    try {
+      const response = await backendApiInstance.get('/stats/comparisons');
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Erreur lors de la récupération des comparaisons'
+      };
+    }
+  }
+};
+
+export default backendApiInstance;
+
+// Export du service principal avec toutes les méthodes
+export const backendApi = {
+  // Authentification
+  ...authService,
+  
+  // Collections
+  getCollection: collectionService.getMyCollections,
+  createCollection: collectionService.createCollection,
+  updateCollection: collectionService.updateCollection,
+  deleteCollection: collectionService.deleteCollection,
+  addCardToCollection: collectionService.addCardToCollection,
+  removeCardFromCollection: collectionService.removeCardFromCollection,
+  
+  // Decks
+  getUserDecks: deckService.getUserDecks,
+  createDeck: deckService.createDeck,
+  updateDeck: deckService.updateDeck,
+  deleteDeck: deckService.deleteDeck,
+  addCardToDeck: deckService.addCardToDeck,
+  removeCardFromDeck: deckService.removeCardFromDeck,
+  
+  // Dashboard et statistiques
+  getDashboardStats: dashboardService.getDashboardStats,
+  getCollectionGrowth: dashboardService.getCollectionGrowth,
+  getUserComparisons: dashboardService.getUserComparisons
+};
