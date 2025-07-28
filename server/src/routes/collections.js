@@ -2,6 +2,16 @@
 import Collection from '../models/Collection.js';
 import Card from '../models/Card.js';
 import { authenticateToken } from '../middleware/auth.js';
+import {
+    createCollection,
+    getMyCollections,
+    getCollectionById,
+    updateCollection,
+    deleteCollection,
+    addCardToCollection,
+    updateCardInCollection,
+    removeCardFromCollection
+} from '../controllers/collectionController.js';
 
 const router = express.Router();
 
@@ -16,58 +26,16 @@ router.get('/test', (req, res) => {
     });
 });
 
-// GET /api/collections - Obtenir toutes les collections de l utilisateur connecte
-router.get('/', async (req, res) => {
-    try {
-        const collections = await Collection.find({ owner: req.user._id })
-            .populate('cards.card')
-            .sort({ createdAt: -1 });
+// Routes utilisant le contrôleur
+router.get('/', getMyCollections);
+router.post('/', createCollection);
+router.get('/:id', getCollectionById);
+router.put('/:id', updateCollection);
+router.delete('/:id', deleteCollection);
 
-        res.json({
-            success: true,
-            collections
-        });
-    } catch (error) {
-        console.error('Erreur lors de la recuperation des collections:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Erreur serveur lors de la recuperation des collections'
-        });
-    }
-});
-
-// POST /api/collections - Creer une nouvelle collection
-router.post('/', async (req, res) => {
-    try {
-        const { name, description } = req.body;
-
-        if (!name) {
-            return res.status(400).json({
-                success: false,
-                message: 'Le nom de la collection est requis'
-            });
-        }
-
-        const collection = new Collection({
-            name,
-            description,
-            owner: req.user._id
-        });
-
-        await collection.save();
-
-        res.status(201).json({
-            success: true,
-            message: 'Collection creee avec succes',
-            collection
-        });
-    } catch (error) {
-        console.error('Erreur lors de la creation de la collection:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Erreur serveur lors de la creation de la collection'
-        });
-    }
-});
+// Routes pour les cartes dans les collections
+router.post('/:id/cards', addCardToCollection);
+router.put('/:id/cards/:cardId', updateCardInCollection);
+router.delete('/:id/cards/:cardId', removeCardFromCollection);
 
 export default router;

@@ -11,7 +11,8 @@ const CardItem = ({
   showAddButton = true,
   onToggleFace,
   currentFace = 0,
-  onRemoveCard
+  onRemoveCard,
+  isFoil = false
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -27,7 +28,7 @@ const CardItem = ({
 
   const handleQuantityChange = (newQuantity) => {
     if (newQuantity >= 0) {
-      onQuantityChange(card.id, newQuantity);
+      onQuantityChange(card, newQuantity);
     }
   };
 
@@ -161,7 +162,7 @@ const CardItem = ({
 
           <div className="card-details">
             <span className="card-set" title={`Extension: ${card.set_name}`}>
-              {card.set_name} ({card.set.toUpperCase()})
+              {card.set_name} ({(card.set || card.set_code || 'UNK').toUpperCase()})
             </span>
             
             {card.rarity && (

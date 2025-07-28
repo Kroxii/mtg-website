@@ -195,9 +195,21 @@ export const addCardToCollection = async (req, res, next) => {
       });
     }
 
+    // Vérifier si la carte existe dans la base de données, sinon la créer
+    let existingCard = await Card.findOne({ scryfallId: cardId });
+    
+    if (!existingCard) {
+      // Créer un document de base pour la carte
+      existingCard = await Card.create({
+        scryfallId: cardId,
+        name: `Carte ${cardId}`, // Nom temporaire
+        // Autres champs seront mis à jour par un job de synchronisation
+      });
+    }
+
     // Vérifier si la carte existe déjà avec les mêmes caractéristiques
     const existingCardIndex = collection.cards.findIndex(item => 
-      item.card.toString() === cardId &&
+      item.card.toString() === existingCard._id.toString() &&
       item.condition === (condition || 'near_mint') &&
       item.language === (language || 'fr') &&
       item.foil === (foil || false)
@@ -205,14 +217,14 @@ export const addCardToCollection = async (req, res, next) => {
 
     if (existingCardIndex !== -1) {
       // Mettre à jour la quantité de la carte existante
-      collection.cards[existingCardIndex].quantity += quantity || 1;
+      collection.cards[existingCardIndex].quantity = quantity || 1; // Remplacer plutôt qu'ajouter
       if (notes) {
         collection.cards[existingCardIndex].notes = notes;
       }
     } else {
       // Ajouter une nouvelle carte
       collection.cards.push({
-        card: cardId,
+        card: existingCard._id,
         quantity: quantity || 1,
         condition: condition || 'near_mint',
         language: language || 'fr',

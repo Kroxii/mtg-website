@@ -189,28 +189,51 @@ const Collection = () => {
   };
 
   const handleQuantityChange = async (card, newQuantity) => {
-    if (!selectedCollection) return;
+    if (!selectedCollection) {
+      console.error('Aucune collection sélectionnée');
+      return;
+    }
+    
+    console.log('Mise à jour quantité:', { cardId: card.id, cardName: card.name, newQuantity });
     
     try {
       if (newQuantity === 0) {
         // Supprimer la carte de la collection
-        const cardInCollection = selectedCollection.cards.find(c => c.card === card.id);
+        const cardInCollection = selectedCollection.cards.find(c => {
+          const cardObjectId = typeof c.card === 'string' ? c.card : c.card._id || c.card.id;
+          return cardObjectId === card.id;
+        });
         if (cardInCollection) {
-          await collectionService.removeCardFromCollection(selectedCollection._id, cardInCollection._id);
+          console.log('Suppression carte:', cardInCollection._id);
+          const result = await collectionService.removeCardFromCollection(selectedCollection._id, cardInCollection._id);
+          if (!result.success) {
+            console.error('Erreur suppression:', result.error);
+            return;
+          }
         }
       } else {
         // Ajouter ou mettre à jour la carte dans la collection
-        await collectionService.addCardToCollection(selectedCollection._id, {
+        console.log('Ajout/mise à jour carte:', {
+          collectionId: selectedCollection._id,
+          cardId: card.id,
+          quantity: newQuantity
+        });
+        const result = await collectionService.addCardToCollection(selectedCollection._id, {
           cardId: card.id,
           quantity: newQuantity,
           condition: 'near_mint',
           language: 'fr',
           foil: false
         });
+        if (!result.success) {
+          console.error('Erreur ajout:', result.error);
+          return;
+        }
       }
       
       // Recharger les collections pour avoir les données à jour
       await loadUserCollections();
+      console.log('Collections rechargées avec succès');
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la collection:', error);
     }
@@ -218,16 +241,29 @@ const Collection = () => {
 
   const getCardQuantity = (cardId) => {
     if (!selectedCollection || !selectedCollection.cards) return 0;
-    const cardInCollection = selectedCollection.cards.find(c => c.card === cardId);
+    const cardInCollection = selectedCollection.cards.find(c => {
+      const cardObjectId = typeof c.card === 'string' ? c.card : c.card._id || c.card.id;
+      return cardObjectId === cardId;
+    });
     return cardInCollection ? cardInCollection.quantity : 0;
   };
 
   const getSetProgress = (setCode) => {
     if (!selectedCollection || !selectedCollection.cards) return { owned: 0, total: 0, percentage: 0 };
     
-    const setCards = selectedCollection.cards.filter(card => 
-      card.set_code && card.set_code.toLowerCase() === setCode.toLowerCase()
-    );
+    // Compter les cartes possédées dans cette extension
+    const setCards = selectedCollection.cards.filter(cardItem => {
+      // Gérer les cas où card peut être un objet ou un string
+      const card = cardItem.card;
+      if (typeof card === 'string') {
+        // Si c'est juste un ID, on ne peut pas faire la comparaison par set
+        return false;
+      }
+      
+      // Si c'est un objet card avec des propriétés
+      const cardSetCode = card?.setCode || card?.set_code || card?.set;
+      return cardSetCode && cardSetCode.toLowerCase() === setCode.toLowerCase();
+    });
     
     const totalCards = sets.find(set => set.code === setCode)?.card_count || 0;
     const ownedCards = setCards.length;

@@ -4,8 +4,7 @@ const cardSchema = new mongoose.Schema({
   // ID Scryfall de la carte
   scryfallId: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   // Informations de base
   name: {
