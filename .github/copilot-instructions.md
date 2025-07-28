@@ -2,11 +2,11 @@
 
 # Magic: The Gathering Collection Manager
 
-This is a React application for cataloging Magic: The Gathering card collections and deck lists.
+This is a React application for cataloging Magic: The Gathering card collections.
 
 ## Project Structure
 - Use React with Vite for optimal performance
-- Use React Router for navigation between collection and deck pages
+- Use React Router for navigation between collection pages
 - Integrate with Scryfall API for card data and images in French
 - Connect to CardMarket API for price information
 - Use modern ES6+ JavaScript features

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.jsx';
-import { Home, Library, FileText, User, LogOut, Zap, BarChart3 } from 'lucide-react';
+import { Home, Library, User, LogOut, Zap, BarChart3 } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -47,15 +47,6 @@ const Navigation = () => {
                 >
                   <Library size={18} />
                   Collection
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/decklists" 
-                  className={`nav-link ${location.pathname === '/decklists' ? 'active' : ''}`}
-                >
-                  <FileText size={18} />
-                  Deck Lists
                 </Link>
               </li>
             </>

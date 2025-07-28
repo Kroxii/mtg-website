@@ -1,11 +1,12 @@
-# Magic: The Gathering Collection Manager
+# Magic: The- **🇫🇷 Noms français** : Support complet des noms de cartes en français avec fallback automatique
+- **🃏 Menu contextuel** : Options avancées pour chaque carte (retourner, quantité, supprimer, CardMarket)ring Collection Manager
 
-Une application React moderne pour cataloguer votre collection de cartes Magic: The Gathering et gérer vos deck lists.
+Une application React moderne pour cataloguer votre collection de cartes Magic: The Gathering.
 
 ## ✨ Fonctionnalités
 
 - **🏠 Page d'accueil attractive** : Interface moderne avec accès rapide aux fonctionnalités
-- **📊 Statistiques en temps réel** : Suivi de votre collection et de vos decks
+- **📊 Statistiques en temps réel** : Suivi de votre collection
 - **📚 Catalogage par extension** : Organisez votre collection par extension Magic
 - **🔍 Recherche avancée** : Trouvez facilement les cartes dans votre collection
 - **🗂️ Tri personnalisable** : Triez les extensions par date ou alphabétiquement
@@ -36,17 +37,13 @@ Une application React moderne pour cataloguer votre collection de cartes Magic: 
 ### Page d'Accueil
 - **Vue d'ensemble** : Découvrez toutes les fonctionnalités
 - **Statistiques** : Consultez vos statistiques de collection en temps réel
-- **Accès rapide** : Boutons directs vers Collection et Deck Lists
+- **Accès rapide** : Boutons directs vers Collection
 
 ### Collection
 1. Sélectionnez une extension dans la liste déroulante
 2. Parcourez les cartes de l'extension
 3. Utilisez les boutons + et - pour ajouter/retirer des cartes
 4. Cliquez sur "CardMarket" pour voir les prix et acheter la carte
-
-### Deck Lists
-1. **Création** : Cliquez sur "Nouveau Deck" et choisissez le format
-2. **Sélection** : Cliquez sur un deck dans la barre latérale
 3. **Ajout de cartes** : Recherchez et ajoutez des cartes (vérification des banlists)
 4. **Gestion des quantités** : Ajustez les quantités avec les boutons +/-
 5. **Changement d'apparence** : Cliquez sur l'icône d'image pour changer l'apparence
@@ -67,8 +64,7 @@ src/
 │   └── CardItem.jsx     # Composant carte
 ├── pages/               # Pages principales
 │   ├── Home.jsx         # Page d'accueil
-│   ├── Collection.jsx   # Page collection
-│   └── DeckLists.jsx    # Page deck lists
+│   └── Collection.jsx   # Page collection
 ├── utils/               # Utilitaires
 │   ├── api.js          # Configuration API
 │   └── banlists.js     # Gestion des formats et banlists

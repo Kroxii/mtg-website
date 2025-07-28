@@ -197,112 +197,6 @@ export const collectionService = {
   }
 };
 
-// ===== SERVICES DE DECK =====
-
-export const deckService = {
-  // Récupérer tous les decks de l'utilisateur connecté
-  getMyDecks: async () => {
-    try {
-      const response = await backendApiInstance.get('/decks');
-      return { success: true, decks: response.data.decks };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de la récupération des decks'
-      };
-    }
-  },
-
-  // Créer un nouveau deck
-  createDeck: async (deckData) => {
-    try {
-      const response = await backendApiInstance.post('/decks', {
-        name: deckData.name,
-        description: deckData.description || '',
-        format: deckData.format,
-        isPublic: deckData.isPublic || false,
-        commander: deckData.commander || null
-      });
-      return { success: true, deck: response.data.deck };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de la création du deck'
-      };
-    }
-  },
-
-  // Récupérer un deck par ID
-  getDeckById: async (deckId) => {
-    try {
-      const response = await backendApiInstance.get(`/decks/${deckId}`);
-      return { success: true, deck: response.data.deck };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de la récupération du deck'
-      };
-    }
-  },
-
-  // Mettre à jour un deck
-  updateDeck: async (deckId, updateData) => {
-    try {
-      const response = await backendApiInstance.put(`/decks/${deckId}`, updateData);
-      return { success: true, deck: response.data.deck };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de la mise à jour du deck'
-      };
-    }
-  },
-
-  // Supprimer un deck
-  deleteDeck: async (deckId) => {
-    try {
-      await backendApiInstance.delete(`/decks/${deckId}`);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de la suppression du deck'
-      };
-    }
-  },
-
-  // Ajouter une carte à un deck
-  addCardToDeck: async (deckId, cardData) => {
-    try {
-      const response = await backendApiInstance.post(`/decks/${deckId}/cards`, {
-        card: cardData.cardId,
-        quantity: cardData.quantity || 1,
-        isSideboard: cardData.isSideboard || false,
-        isCommander: cardData.isCommander || false
-      });
-      return { success: true, deck: response.data.deck };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de l\'ajout de la carte au deck'
-      };
-    }
-  },
-
-  // Retirer une carte d'un deck
-  removeCardFromDeck: async (deckId, cardItemId) => {
-    try {
-      await backendApiInstance.delete(`/decks/${deckId}/cards/${cardItemId}`);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Erreur lors de la suppression de la carte du deck'
-      };
-    }
-  }
-};
-
 // ===== SERVICES DE STATISTIQUES =====
 
 export const dashboardService = {
@@ -360,14 +254,6 @@ export const backendApi = {
   deleteCollection: collectionService.deleteCollection,
   addCardToCollection: collectionService.addCardToCollection,
   removeCardFromCollection: collectionService.removeCardFromCollection,
-  
-  // Decks
-  getUserDecks: deckService.getUserDecks,
-  createDeck: deckService.createDeck,
-  updateDeck: deckService.updateDeck,
-  deleteDeck: deckService.deleteDeck,
-  addCardToDeck: deckService.addCardToDeck,
-  removeCardFromDeck: deckService.removeCardFromDeck,
   
   // Dashboard et statistiques
   getDashboardStats: dashboardService.getDashboardStats,

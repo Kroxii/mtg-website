@@ -4,7 +4,6 @@ import Navigation from './components/Navigation';
 import Home from './pages/Home';
 import SimpleDashboard from './pages/SimpleDashboard';
 import Collection from './pages/Collection';
-import DeckLists from './pages/DeckLists';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
@@ -55,14 +54,6 @@ const AppContent = () => {
             element={
               <ProtectedRoute>
                 <Collection />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/decklists" 
-            element={
-              <ProtectedRoute>
-                <DeckLists />
               </ProtectedRoute>
             } 
           />

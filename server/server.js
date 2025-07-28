@@ -12,7 +12,6 @@ import { fileURLToPath } from 'url';
 import authRoutes from './src/routes/auth.js';
 import userRoutes from './src/routes/users.js';
 import collectionRoutes from './src/routes/collections.js';
-import deckRoutes from './src/routes/decks.js';
 import cardRoutes from './src/routes/cards.js';
 import statsRoutes from './src/routes/stats.js';
 
@@ -79,7 +78,6 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/collections', collectionRoutes);
-app.use('/api/decks', deckRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/stats', statsRoutes);
 

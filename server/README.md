@@ -56,13 +56,11 @@ server/
 │   ├── models/
 │   │   ├── User.js             # Modèle Utilisateur
 │   │   ├── Collection.js       # Modèle Collection
-│   │   ├── Deck.js            # Modèle Deck
 │   │   └── Card.js            # Modèle Carte
 │   └── routes/
 │       ├── auth.js            # Routes d'authentification
 │       ├── users.js           # Routes utilisateurs
 │       ├── collections.js     # Routes collections
-│       ├── decks.js          # Routes decks
 │       └── cards.js          # Routes cartes (Scryfall API)
 ├── .env.example
 ├── package.json
@@ -101,18 +99,6 @@ L'API utilise JWT (JSON Web Tokens) pour l'authentification. Les tokens sont val
 - `POST /api/collections/:id/cards` - Ajouter une carte
 - `PUT /api/collections/:id/cards/:cardId` - Modifier une carte
 - `DELETE /api/collections/:id/cards/:cardId` - Supprimer une carte
-
-### Decks
-- `GET /api/decks` - Mes decks
-- `POST /api/decks` - Créer un deck
-- `GET /api/decks/search` - Rechercher des decks publics
-- `GET /api/decks/:id` - Récupérer un deck
-- `PUT /api/decks/:id` - Mettre à jour un deck
-- `DELETE /api/decks/:id` - Supprimer un deck
-- `POST /api/decks/:id/cards` - Ajouter une carte
-- `PUT /api/decks/:id/cards/:cardId` - Modifier une carte
-- `DELETE /api/decks/:id/cards/:cardId` - Supprimer une carte
-- `POST /api/decks/:id/clone` - Cloner un deck
 
 ### Cartes (API Scryfall)
 - `GET /api/cards/search` - Rechercher des cartes

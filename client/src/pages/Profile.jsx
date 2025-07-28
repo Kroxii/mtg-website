@@ -68,16 +68,6 @@ const Profile = () => {
                 <span className="stat-value">{user.collection ? user.collection.length : 0}</span>
               </div>
             </div>
-
-            <div className="stat-item">
-              <div className="stat-icon">
-                <User size={20} />
-              </div>
-              <div className="stat-content">
-                <span className="stat-label">Deck lists créées</span>
-                <span className="stat-value">{user.deckLists ? user.deckLists.length : 0}</span>
-              </div>
-            </div>
           </div>
 
           <div className="profile-actions">

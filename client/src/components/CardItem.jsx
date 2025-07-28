@@ -9,11 +9,8 @@ const CardItem = ({
   quantity = 0, 
   onQuantityChange, 
   showAddButton = true,
-  isDeckCard = false,
   onToggleFace,
   currentFace = 0,
-  isFoil = false,
-  onToggleFoil,
   onRemoveCard
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -50,12 +47,6 @@ const CardItem = ({
     }
   };
 
-  const handleToggleFoil = () => {
-    if (onToggleFoil) {
-      onToggleFoil(card.id);
-    }
-  };
-
   const handleViewOnCardMarket = () => {
     const url = getCardMarketUrl(card);
     window.open(url, '_blank');
@@ -85,25 +76,6 @@ const CardItem = ({
       label: currentFace === 0 ? 'Voir face B' : 'Voir face A',
       action: handleToggleFace,
       icon: currentFace === 0 ? '🔄' : '↩️'
-    });
-  }
-
-  if (onToggleFoil) {
-    contextMenuOptions.push({
-      label: isFoil ? 'Version normale' : 'Version foil',
-      action: handleToggleFoil,
-      icon: isFoil ? '✨' : '⭐'
-    });
-  }
-
-  if (onRemoveCard) {
-    contextMenuOptions.push({
-      label: 'Retirer du deck',
-      action: () => {
-        onRemoveCard(card.id);
-        handleCloseContextMenu();
-      },
-      icon: '🗑️'
     });
   }
 
@@ -235,20 +207,6 @@ const CardItem = ({
               >
                 {currentFace === 0 ? <Eye size={16} /> : <EyeOff size={16} />}
                 Face {currentFace === 0 ? 'B' : 'A'}
-              </button>
-            </div>
-          )}
-
-          {/* Toggle foil pour les deck lists */}
-          {isDeckCard && onToggleFoil && (
-            <div className="card-actions">
-              <button
-                className={`action-btn toggle-foil ${isFoil ? 'active' : ''}`}
-                onClick={handleToggleFoil}
-                title={isFoil ? 'Version normale' : 'Version foil'}
-              >
-                <Sparkles size={16} />
-                {isFoil ? 'Foil' : 'Normal'}
               </button>
             </div>
           )}
