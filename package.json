@@ -15,5 +15,11 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "workspaces": ["client", "server"]
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
 }

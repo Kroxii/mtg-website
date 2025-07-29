@@ -5,6 +5,66 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+// Route générale pour les statistiques
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    // Rediriger vers dashboard par défaut
+    const dashboardStats = await getDashboardStats(req.user.id);
+    res.json({
+      success: true,
+      message: 'Statistiques générales',
+      data: dashboardStats,
+      endpoints: [
+        'GET /dashboard - Statistiques du tableau de bord',
+        'GET /collection - Statistiques de collection',
+        'GET /sets - Statistiques des extensions'
+      ]
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Erreur serveur'
+    });
+  }
+});
+
+// Fonction helper pour les statistiques
+async function getDashboardStats(userId) {
+  try {
+    const collection = await Collection.findOne({ user: userId }).populate('cards.card');
+    
+    if (!collection) {
+      return {
+        totalCards: 0,
+        uniqueSets: 0,
+        estimatedValue: 0,
+        monthlyAdditions: 0,
+        message: 'Aucune collection trouvée'
+      };
+    }
+    
+    return {
+      totalCards: collection.cards.length,
+      uniqueSets: [...new Set(collection.cards.map(c => c.card?.set).filter(Boolean))].length,
+      estimatedValue: collection.cards.reduce((sum, c) => sum + (c.card?.price || 0), 0),
+      monthlyAdditions: collection.cards.filter(c => {
+        const addedDate = new Date(c.dateAdded);
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        return addedDate > lastMonth;
+      }).length
+    };
+  } catch (error) {
+    return {
+      totalCards: 0,
+      uniqueSets: 0,
+      estimatedValue: 0,
+      monthlyAdditions: 0,
+      error: 'Erreur lors du calcul des statistiques'
+    };
+  }
+}
+
 // Récupérer les statistiques du tableau de bord
 router.get('/dashboard', authenticateToken, async (req, res) => {
   try {
