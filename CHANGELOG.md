@@ -19,7 +19,19 @@
 - **Affichage des noms** : Priorité aux `printed_name` (français) puis `name_fr` puis `name` (anglais)
 - **Types de cartes** : Même logique pour `printed_type_line`, `type_line_fr`, `type_line`
 
-### 3. 📊 Tri par nombre de cartes
+### 3. 🎨 Refonte Complète Dashboard (Juillet 2025)
+
+- **Design Premium** : Glass morphism avec backdrop-filter et transparence
+- **Background Moderne** : Gradient violet/bleu avec effet fixe
+- **Layout Fixe** : Grid 4 colonnes avec positionnement précis par data-id
+- **Animations Fluides** : Entrée progressive avec delays et cubic-bezier
+- **Hover Effects** : Transform 3D et box-shadow dynamiques
+- **Titre Doré** : Gradient text effet premium sur le titre
+- **ServerStatus Redesigné** : Indicateurs colorés avec glow effects
+- **Responsive Perfectionné** : 4 breakpoints pour tous appareils
+- **Performance** : Transitions GPU-accelerated et optimisations modernes
+
+### 4. 📊 Tri par nombre de cartes
 
 - **Nouvelles options** : "Nb cartes (Plus)" et "Nb cartes (Moins)"
 - **Tri intelligent** : Par `card_count` des extensions

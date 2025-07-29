@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
-import SimpleDashboard from './pages/SimpleDashboard';
+import Dashboard from './pages/Dashboard';
 import Collection from './pages/Collection';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -45,7 +45,7 @@ const AppContent = () => {
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <SimpleDashboard />
+                <Dashboard />
               </ProtectedRoute>
             } 
           />

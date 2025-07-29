@@ -176,6 +176,8 @@ export const collectionService = {
       });
       return { success: true, collection: response.data.collection };
     } catch (error) {
+      console.error('Erreur lors de l\'ajout de la carte:', error);
+      console.error('Données envoyées:', cardData);
       return {
         success: false,
         error: error.response?.data?.error || 'Erreur lors de l\'ajout de la carte'

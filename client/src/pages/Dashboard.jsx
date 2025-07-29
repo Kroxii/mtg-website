@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { backendApi } from '../services/backendApi.js';
 import DraggableWidget from '../components/DraggableWidget.jsx';
+import ServerStatus from '../components/ServerStatus.jsx';
 import ColorDistributionChart from '../components/charts/ColorDistributionChart.jsx';
 import TypeDistributionChart from '../components/charts/TypeDistributionChart.jsx';
 import CMCDistributionChart from '../components/charts/CMCDistributionChart.jsx';
@@ -11,7 +12,7 @@ import StatsOverview from '../components/widgets/StatsOverview.jsx';
 import TopExtensions from '../components/widgets/TopExtensions.jsx';
 import RecentAdditions from '../components/widgets/RecentAdditions.jsx';
 import CollectionComparison from '../components/widgets/CollectionComparison.jsx';
-import { BarChart3, PieChart, TrendingUp, Users, Library, Clock } from 'lucide-react';
+import { BarChart3, PieChart, TrendingUp, Users, Library, Clock, Server } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -20,8 +21,9 @@ const Dashboard = () => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [widgets, setWidgets] = useState([
-    { id: 'overview', title: 'Vue d\'ensemble', icon: BarChart3, component: 'StatsOverview', position: { x: 0, y: 0 }, size: 'large' },
-    { id: 'color-distribution', title: 'Répartition par couleurs', icon: PieChart, component: 'ColorDistributionChart', position: { x: 1, y: 0 }, size: 'medium' },
+    { id: 'server-status', title: 'État du serveur', icon: Server, component: 'ServerStatus', position: { x: 0, y: 0 }, size: 'small' },
+    { id: 'overview', title: 'Vue d\'ensemble', icon: BarChart3, component: 'StatsOverview', position: { x: 1, y: 0 }, size: 'large' },
+    { id: 'color-distribution', title: 'Répartition par couleurs', icon: PieChart, component: 'ColorDistributionChart', position: { x: 2, y: 0 }, size: 'medium' },
     { id: 'type-distribution', title: 'Répartition par types', icon: PieChart, component: 'TypeDistributionChart', position: { x: 0, y: 1 }, size: 'medium' },
     { id: 'cmc-distribution', title: 'Répartition par CMC', icon: BarChart3, component: 'CMCDistributionChart', position: { x: 1, y: 1 }, size: 'medium' },
     { id: 'growth-chart', title: 'Évolution de la collection', icon: TrendingUp, component: 'CollectionGrowthChart', position: { x: 0, y: 2 }, size: 'large' },
@@ -34,17 +36,51 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        console.log('🔍 Chargement des données du dashboard...');
+        console.log('👤 Utilisateur connecté:', user);
         
         // Récupérer les données de la collection
+        console.log('📊 Récupération des collections...');
         const collectionResponse = await backendApi.getCollection();
-        setCollectionData(collectionResponse.data);
+        console.log('📊 Réponse collections:', collectionResponse);
+        if (collectionResponse.success) {
+          setCollectionData(collectionResponse.collections);
+        } else {
+          console.error('❌ Erreur collections:', collectionResponse.error);
+        }
 
         // Récupérer les statistiques du tableau de bord
+        console.log('📈 Récupération des stats...');
         const statsResponse = await backendApi.getDashboardStats();
-        setDashboardStats(statsResponse.data);
+        console.log('📈 Réponse stats:', statsResponse);
+        if (statsResponse.success) {
+          setDashboardStats(statsResponse.data);
+        } else {
+          console.error('❌ Erreur stats:', statsResponse.error);
+          // En cas d'erreur, utiliser des données par défaut pour le développement
+          setDashboardStats({
+            totalCards: 0,
+            uniqueSets: 0,
+            estimatedValue: 0,
+            monthlyAdditions: 0,
+            colorDistribution: [],
+            typeDistribution: [],
+            cmcDistribution: []
+          });
+        }
 
       } catch (error) {
-        console.error('Erreur lors du chargement des données du tableau de bord:', error);
+        console.error('❌ Erreur lors du chargement des données du tableau de bord:', error);
+        // Données par défaut en cas d'erreur
+        setDashboardStats({
+          totalCards: 0,
+          uniqueSets: 0,
+          estimatedValue: 0,
+          monthlyAdditions: 0,
+          colorDistribution: [],
+          typeDistribution: [],
+          cmcDistribution: []
+        });
       } finally {
         setLoading(false);
       }
@@ -52,6 +88,9 @@ const Dashboard = () => {
 
     if (user) {
       fetchDashboardData();
+    } else {
+      console.log('⚠️ Pas d\'utilisateur connecté');
+      setLoading(false);
     }
   }, [user]);
 
@@ -65,6 +104,7 @@ const Dashboard = () => {
 
   const renderWidget = (widget) => {
     const componentMap = {
+      ServerStatus: <ServerStatus />,
       StatsOverview: <StatsOverview data={dashboardStats} />,
       ColorDistributionChart: <ColorDistributionChart data={dashboardStats?.colorDistribution} />,
       TypeDistributionChart: <TypeDistributionChart data={dashboardStats?.typeDistribution} />,
@@ -87,28 +127,44 @@ const Dashboard = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="dashboard-error">
+        <h2>Accès non autorisé</h2>
+        <p>Vous devez être connecté pour voir le tableau de bord.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard">
+    <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>Tableau de bord</h1>
-        <p>Bienvenue, {user?.username}</p>
+        <h1>Collection MTG</h1>
+        <p>Tableau de bord de {user?.username}</p>
       </div>
 
       <div className="dashboard-grid">
         {widgets.map(widget => (
-          <DraggableWidget
+          <div 
             key={widget.id}
-            widget={widget}
-            onPositionChange={updateWidgetPosition}
+            className="widget"
+            data-id={widget.id}
           >
             <div className="widget-header">
-              <widget.icon size={20} />
-              <h3>{widget.title}</h3>
+              <widget.icon className="widget-icon" />
+              <h3 className="widget-title">{widget.title}</h3>
             </div>
-            <div className="widget-content">
-              {renderWidget(widget)}
+            <div className={`widget-content ${loading ? 'loading' : ''}`}>
+              {loading ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  <div className="loading-text">Chargement...</div>
+                </>
+              ) : (
+                renderWidget(widget)
+              )}
             </div>
-          </DraggableWidget>
+          </div>
         ))}
       </div>
     </div>

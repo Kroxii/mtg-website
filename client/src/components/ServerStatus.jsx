@@ -23,34 +23,53 @@ const ServerStatus = () => {
     checkServerHealth();
   }, []);
 
-  const retryConnection = () => {
-    setLoading(true);
-    setError(null);
-    checkServerHealth();
+  const retryConnection = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const health = await authApi.checkHealth();
+      setServerStatus(health);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="server-status loading">
-        <span>🔄 Vérification de la connexion au serveur...</span>
+      <div className="server-status-widget">
+        <div className="status-header">
+          <div className="status-indicator connecting"></div>
+          <span className="status-text connecting">Connexion...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="server-status error">
-        <span>❌ Erreur de connexion au serveur: {error}</span>
-        <button onClick={retryConnection} className="retry-btn">
-          Réessayer
-        </button>
+      <div className="server-status-widget">
+        <div className="status-header">
+          <div className="status-indicator offline"></div>
+          <span className="status-text offline">Hors ligne</span>
+        </div>
+        <div className="server-info">
+          <p><strong>Erreur:</strong> {error}</p>
+          <button onClick={retryConnection} className="retry-btn">
+            Réessayer
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="server-status success">
-      <span>✅ Serveur connecté</span>
+    <div className="server-status-widget">
+      <div className="status-header">
+        <div className="status-indicator online"></div>
+        <span className="status-text online">Connecté</span>
+      </div>
       <div className="server-info">
         <p><strong>Status:</strong> {serverStatus.status}</p>
         <p><strong>Message:</strong> {serverStatus.message}</p>

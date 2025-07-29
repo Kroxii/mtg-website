@@ -4,17 +4,8 @@ import { authService } from '../services/backendApi';
 // Contexte d'authentification
 const AuthContext = createContext();
 
-// Hook pour utiliser le contexte d'authentification
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth doit être utilisé dans un AuthProvider');
-  }
-  return context;
-};
-
 // Provider d'authentification
-export const AuthProvider = ({ children }) => {
+function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,4 +62,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
+
+// Hook pour utiliser le contexte d'authentification
+function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth doit être utilisé dans un AuthProvider');
+  }
+  return context;
+}
+
+export { AuthProvider, useAuth };

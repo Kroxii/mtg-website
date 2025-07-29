@@ -199,12 +199,30 @@ export const addCardToCollection = async (req, res, next) => {
     let existingCard = await Card.findOne({ scryfallId: cardId });
     
     if (!existingCard) {
-      // Créer un document de base pour la carte
-      existingCard = await Card.create({
-        scryfallId: cardId,
-        name: `Carte ${cardId}`, // Nom temporaire
-        // Autres champs seront mis à jour par un job de synchronisation
-      });
+      // Créer un document de base pour la carte avec les champs minimum requis
+      try {
+        existingCard = await Card.create({
+          scryfallId: cardId,
+          name: `Carte ${cardId}`, // Nom temporaire qui sera mis à jour plus tard
+          typeLine: 'Unknown',
+          colors: [],
+          colorIdentity: [],
+          cmc: 0,
+          rarity: 'common',
+          layout: 'normal',
+          legalities: {},
+          prices: {},
+          keywords: []
+          // Les autres champs seront mis à jour par un job de synchronisation avec Scryfall
+        });
+        console.log(`Carte temporaire créée avec l'ID Scryfall: ${cardId}`);
+      } catch (createError) {
+        console.error('Erreur lors de la création de la carte:', createError);
+        return res.status(500).json({
+          success: false,
+          error: 'Impossible de créer la carte dans la base de données'
+        });
+      }
     }
 
     // Vérifier si la carte existe déjà avec les mêmes caractéristiques
