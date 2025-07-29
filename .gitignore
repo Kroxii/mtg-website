@@ -22,3 +22,33 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Fichiers de développement et test
+test-*.js
+test-*.html
+validation-*.js
+check-*.js
+*-test.js
+
+# Rapports de développement
+BUGFIX_REPORT.md
+BUGS_FIXED.md
+DASHBOARD_FIX.md
+DASHBOARD_PREMIUM_FINAL.md
+RESUME_FINAL.md
+
+# Dossiers temporaires
+.vite
+.cache
+temp/
+tmp/
+
+# Fichiers de sauvegarde
+*.bak
+*.backup
+*copy/
+*copy
+
+# Variables d'environnement sensibles (garder les .example)
+.env
+!.env.example

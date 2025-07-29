@@ -10,7 +10,9 @@
     "server": "cd server && npm run dev",
     "server:start": "cd server && node server.js",
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-    "start": "echo 'Démarrez le serveur avec: npm run server:start' && echo 'Puis le client avec: npm run dev'"
+    "start": "echo 'Démarrez le serveur avec: npm run server:start' && echo 'Puis le client avec: npm run dev'",
+    "clean": "node cleanup.js",
+    "clean:deep": "node cleanup.js --deep"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
@@ -18,8 +20,5 @@
   "workspaces": [
     "client",
     "server"
-  ],
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  }
+  ]
 }
